@@ -18,7 +18,7 @@ function apiError(err) {
 
 export default function Transactions() {
   const { showToast } = useOutletContext();
-  const { currentCoop } = useAuth();
+  const { currentCoop, user } = useAuth();
 
   const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState('');
@@ -88,6 +88,26 @@ export default function Transactions() {
       showToast(apiError(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleValidate = async (txId) => {
+    try {
+      await client.post(`/cooperatives/${currentCoop._id}/transactions/${txId}/validate`);
+      showToast('Transaction approuvée et scellée ✓');
+      loadTransactions();
+    } catch (err) {
+      showToast(apiError(err));
+    }
+  };
+
+  const handleReject = async (txId) => {
+    try {
+      await client.post(`/cooperatives/${currentCoop._id}/transactions/${txId}/reject`);
+      showToast('Transaction rejetée');
+      loadTransactions();
+    } catch (err) {
+      showToast(apiError(err));
     }
   };
 
@@ -170,7 +190,13 @@ export default function Transactions() {
           <span className="badge-green">{filtered.length} résultats</span>
         </div>
 
-        <TransactionsTable data={paginated} onView={(tx) => showToast(`Bloc ${tx.bloc} — ${tx.hash}`)} />
+        <TransactionsTable 
+          data={paginated} 
+          userRole={user?.role}
+          onView={(tx) => showToast(`Bloc ${tx.bloc} — ${tx.hash}`)} 
+          onValidate={handleValidate}
+          onReject={handleReject}
+        />
 
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
           <p className="text-xs text-slate-400">
