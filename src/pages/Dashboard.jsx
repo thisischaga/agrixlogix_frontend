@@ -106,22 +106,22 @@ export default function Dashboard() {
     try {
       const res = await client.post('/cooperatives', newCoop);
       setNewCoop({ name: '', location: '', cropType: '' });
-      setShowNewForm(false);
       
-      // Rafraîchir les données d'authentification pour obtenir la nouvelle liste de coops
-      if (typeof refreshAuth === 'function') {
-        await refreshAuth();
-        // Sélectionner la nouvelle coopérative automatiquement
-        if (typeof switchCoop === 'function') {
-          switchCoop(res.data);
+      showToast?.('Coopérative créée avec succès !');
+
+      // Rafraîchir les données
+      if (typeof loadCoops === 'function') {
+        await loadCoops();
+        // Sélectionner la nouvelle coopérative
+        if (typeof setCurrentCoop === 'function') {
+          setCurrentCoop(res.data);
         }
       } else {
-        // Fallback si refreshAuth n'est pas dispo
         window.location.reload();
       }
     } catch (err) {
       console.error(err);
-      showToast?.('Erreur lors de la création de la coopérative');
+      showToast?.(err.response?.data?.error || 'Erreur lors de la création');
     } finally {
       setCreating(false);
     }
