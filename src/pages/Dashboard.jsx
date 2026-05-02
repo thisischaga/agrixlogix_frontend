@@ -26,6 +26,8 @@ export default function Dashboard() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [newCoop, setNewCoop] = useState({ name: '', location: '', cropType: '' });
+  const [creating, setCreating] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!currentCoop?._id) return;
