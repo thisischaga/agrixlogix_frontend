@@ -6,8 +6,8 @@ import {
   Pin, ChevronLeft, X, Send, Users,
 } from 'lucide-react';
 
+import { useAuth } from '../context/AuthContext';
 import { forumCategories, forumTopics } from '../data/forumData';
-import { currentUser } from '../data/mockData';
 import { getInitials } from '../utils/formatCurrency';
 
 // ─── Utilitaires ─────────────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ function NewTopicModal({ onClose, onCreate }) {
 }
 
 // ─── Vue détail d'un sujet ────────────────────────────────────────────────────
-function TopicDetail({ topic, onBack, onReact, reactions, myReactions, showToast }) {
+function TopicDetail({ topic, onBack, onReact, reactions, myReactions, showToast, user }) {
   const [replyText, setReplyText]   = useState('');
   const [localReplies, setLocalReplies] = useState(topic.reponsesList || []);
 
@@ -163,7 +163,7 @@ function TopicDetail({ topic, onBack, onReact, reactions, myReactions, showToast
     if (!replyText.trim()) return;
     const newReply = {
       id: `r-${Date.now()}`,
-      auteur: { nom: currentUser.nom, role: currentUser.role, avatar: getInitials(currentUser.nom) },
+      auteur: { nom: user?.name || 'Utilisateur', role: user?.role || 'Membre', avatar: getInitials(user?.name || 'Ut') },
       date: new Date().toISOString(),
       contenu: replyText,
       reactions: { like: 0, utile: 0 },
@@ -246,7 +246,7 @@ function TopicDetail({ topic, onBack, onReact, reactions, myReactions, showToast
       <div className="card">
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Votre réponse</p>
         <div className="flex items-start gap-3">
-          <Avatar nom={currentUser.nom} />
+          <Avatar nom={user?.name || 'Utilisateur'} />
           <div className="flex-1">
             <textarea
               className="input resize-none min-h-[90px]"
@@ -324,6 +324,7 @@ function TopicCard({ topic, onClick }) {
 // ─── PAGE PRINCIPALE ─────────────────────────────────────────────────────────
 export default function Forum() {
   const { showToast } = useOutletContext();
+  const { user } = useAuth();
 
   const [search,       setSearch]       = useState('');
   const [categorie,    setCategorie]    = useState('all');
@@ -365,7 +366,7 @@ export default function Forum() {
       id: `f${Date.now()}`,
       titre,
       categorie: cat,
-      auteur: { nom: currentUser.nom, role: currentUser.role, avatar: getInitials(currentUser.nom) },
+      auteur: { nom: user?.name || 'Utilisateur', role: user?.role || 'Membre', avatar: getInitials(user?.name || 'Ut') },
       date: new Date().toISOString(),
       vues: 1,
       reponses: 0,
@@ -388,6 +389,7 @@ export default function Forum() {
         reactions={reactions}
         myReactions={myReactions}
         showToast={showToast}
+        user={user}
       />
     );
   }

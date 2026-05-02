@@ -1,7 +1,6 @@
 // src/components/charts/RevenueChart.jsx
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { revenueWeek, revenueMonth } from '../../data/mockData';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -17,13 +16,12 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function RevenueChart() {
+export default function RevenueChart({ weekData = [], monthData = [] }) {
   const [period, setPeriod] = useState('semaine');
-  const data = period === 'semaine' ? revenueWeek : revenueMonth;
+  const data = period === 'semaine' ? weekData : monthData;
 
   return (
     <div className="card">
-      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-display font-bold text-slate-800 text-base">Revenus vs Dépenses</h3>
@@ -46,7 +44,6 @@ export default function RevenueChart() {
         </div>
       </div>
 
-      {/* Chart */}
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} barSize={20} barGap={4}>
           <XAxis

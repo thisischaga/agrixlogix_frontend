@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, Vote, Users, Settings, Leaf, MessageSquare,
 } from 'lucide-react';
-import { currentUser } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
 
 const navItems = [
@@ -16,6 +16,8 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const { user } = useAuth();
+
   return (
     <aside className="fixed top-0 left-0 h-screen w-[220px] bg-green-950 flex flex-col z-50">
       {/* Logo */}
@@ -50,11 +52,11 @@ export default function Sidebar() {
       <div className="p-3 border-t border-white/10">
         <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors cursor-pointer">
           <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {getInitials(currentUser.nom)}
+            {getInitials(user?.name || 'AG')}
           </div>
           <div className="min-w-0">
-            <p className="text-white text-xs font-semibold truncate">{currentUser.nom}</p>
-            <p className="text-green-400 text-[10px]">{currentUser.role}</p>
+            <p className="text-white text-xs font-semibold truncate">{user?.name || 'Invité'}</p>
+            <p className="text-green-400 text-[10px]">{user?.role || 'Membre'}</p>
           </div>
           <div className="w-2 h-2 bg-green-400 rounded-full ml-auto shrink-0 shadow-[0_0_6px_#4ade80]" />
         </div>

@@ -1,6 +1,5 @@
 // src/components/charts/DepensesChart.jsx
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { depensesCategories } from '../../data/mockData';
 import { formatCurrency } from '../../utils/formatCurrency';
 
 const CustomTooltip = ({ active, payload }) => {
@@ -14,7 +13,7 @@ const CustomTooltip = ({ active, payload }) => {
   );
 };
 
-export default function DepensesChart() {
+export default function DepensesChart({ data = [] }) {
   return (
     <div className="card">
       <div className="mb-4">
@@ -24,7 +23,7 @@ export default function DepensesChart() {
       <ResponsiveContainer width="100%" height={220}>
         <PieChart>
           <Pie
-            data={depensesCategories}
+            data={data}
             cx="50%"
             cy="50%"
             innerRadius={55}
@@ -32,8 +31,8 @@ export default function DepensesChart() {
             paddingAngle={3}
             dataKey="value"
           >
-            {depensesCategories.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
+            {data.map((entry, i) => (
+              <Cell key={i} fill={entry.color || '#16a34a'} />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />

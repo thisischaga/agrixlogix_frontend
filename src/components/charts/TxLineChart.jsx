@@ -1,6 +1,5 @@
 // src/components/charts/TxLineChart.jsx
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { transactionsParMois } from '../../data/mockData';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
@@ -12,7 +11,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function TxLineChart() {
+export default function TxLineChart({ data = [] }) {
   return (
     <div className="card">
       <div className="mb-4">
@@ -20,7 +19,7 @@ export default function TxLineChart() {
         <p className="text-xs text-slate-400 mt-0.5">Volume mensuel sur l'année en cours</p>
       </div>
       <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={transactionsParMois}>
+        <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis
             dataKey="mois"

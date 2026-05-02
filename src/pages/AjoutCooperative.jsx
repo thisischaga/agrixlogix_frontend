@@ -1,225 +1,138 @@
-import React, { useState, useEffect } from "react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
+import { Building2, MapPin, Users, Wallet, Plus, ArrowLeft } from 'lucide-react';
+import client from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
-//  Dashboard principal des coopératives 
-export default function Dashboard() {
+export default function AjoutCooperative() {
+  const { showToast } = useOutletContext();
+  const { loadCoops } = useAuth();
+  const navigate = useNavigate();
 
-  // Stockage local 
-  const [cooperatives, setCooperatives] = useState(() => {
-    const saved = localStorage.getItem("coops");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  //  Gestion ouverture modal
-  const [isOpen, setIsOpen] = useState(false);
-
-  // 🔥 Formulaire (adapté blockchain + site vitrine)
   const [form, setForm] = useState({
-    name: "",
-    location: "",
-    members: "",
-    budget: "",
-    walletAddress: "", // 🔥 IMPORTANT (blockchain)
-    status: "active"
+    name: '',
+    location: '',
+    description: '',
+    walletAddress: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // 🔥 Sauvegarde automatique dans le navigateur
-  useEffect(() => {
-    localStorage.setItem("coops", JSON.stringify(cooperatives));
-  }, [cooperatives]);
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 🔥 Mise à jour des champs du formulaire
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  // 🔥 Ajouter une coopérative
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ⚠️ Validation minimale
-    if (!form.name || !form.location || !form.walletAddress) {
-      alert("Veuillez remplir les champs obligatoires");
+    setError('');
+    if (!form.name.trim() || !form.location.trim()) {
+      setError('Le nom et la localisation sont obligatoires.');
       return;
     }
-
-    const newCoop = {
-      id: Date.now(),
-      ...form,
-      createdAt: new Date().toISOString() // 🔥 traçabilité (important blockchain)
-    };
-
-    // 🔥 Ajout en tête de liste
-    setCooperatives([newCoop, ...cooperatives]);
-
-    // 🔄 Reset formulaire
-    setForm({
-      name: "",
-      location: "",
-      members: "",
-      budget: "",
-      walletAddress: "",
-      status: "active"
-    });
-
-    setIsOpen(false);
-  };
-
-  // ❌ Supprimer une coopérative
-  const deleteCoop = (id) => {
-    setCooperatives(cooperatives.filter(c => c.id !== id));
+    setLoading(true);
+    try {
+      await client.post('/cooperatives', form);
+      await loadCoops();
+      showToast('Coopérative créée avec succès ✓');
+      navigate('/');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Erreur lors de la création.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="max-w-xl mx-auto flex flex-col gap-5">
+      <button
+        onClick={() => navigate('/')}
+        className="flex items-center gap-2 text-sm text-slate-500 font-semibold hover:text-green-600 bg-transparent border-none cursor-pointer w-fit transition-colors"
+      >
+        <ArrowLeft size={16} /> Retour au tableau de bord
+      </button>
 
-      {/* 🔷 HEADER (style dashboard moderne comme ton site vitrine) */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestion des Coopératives</h1>
-
-        <button
-          onClick={() => setIsOpen(true)}
-          className="bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700"
-        >
-          + Nouvelle coopérative
-        </button>
-      </div>
-
-      {/* 🔷 LISTE DES COOPERATIVES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cooperatives.map((coop) => (
-          <div key={coop.id} className="bg-white p-4 rounded-2xl shadow">
-
-            {/* Nom */}
-            <h3 className="font-bold text-lg">{coop.name}</h3>
-
-            {/* Localisation */}
-            <p className="text-gray-500">📍 {coop.location}</p>
-
-            {/* Infos principales */}
-            <p>👥 {coop.members || 0} membres</p>
-            <p>💰 {coop.budget || 0} FCFA</p>
-
-            {/* 🔥 Wallet blockchain */}
-            <p className="text-xs text-gray-400 break-all">
-              Wallet: {coop.walletAddress}
-            </p>
-
-            {/* 🔥 Statut */}
-            <span className={`text-xs px-2 py-1 rounded inline-block mt-2
-              ${coop.status === "active" 
-                ? "bg-green-100 text-green-600" 
-                : "bg-yellow-100 text-yellow-600"}`}>
-              {coop.status}
-            </span>
-
-            {/* 🔥 Date de création */}
-            <p className="text-xs text-gray-400 mt-2">
-              Créé le: {new Date(coop.createdAt).toLocaleDateString()}
-            </p>
-
-            {/* Bouton suppression */}
-            <button
-              onClick={() => deleteCoop(coop.id)}
-              className="text-red-500 text-sm mt-3"
-            >
-              Supprimer
-            </button>
+      <div className="card">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+            <Building2 size={20} className="text-green-600" />
           </div>
-        ))}
-      </div>
-
-      {/* 🔷 MODAL AJOUT COOPERATIVE */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-2xl w-full max-w-md">
-
-            <h2 className="font-bold text-lg mb-4">
-              Ajouter une coopérative
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-3">
-
-              {/* Nom */}
-              <input
-                name="name"
-                placeholder="Nom de la coopérative"
-                value={form.name}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-
-              {/* Localisation */}
-              <input
-                name="location"
-                placeholder="Localisation"
-                value={form.location}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-
-              {/* Membres */}
-              <input
-                type="number"
-                name="members"
-                placeholder="Nombre de membres"
-                value={form.members}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-
-              {/* Budget */}
-              <input
-                type="number"
-                name="budget"
-                placeholder="Budget (FCFA)"
-                value={form.budget}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-
-              {/* 🔥 Wallet blockchain (obligatoire dans ton projet) */}
-              <input
-                name="walletAddress"
-                placeholder="Adresse Wallet (0x...)"
-                value={form.walletAddress}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              />
-
-              {/* Statut */}
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-                className="w-full border p-2 rounded"
-              >
-                <option value="active">Active</option>
-                <option value="pending">En attente</option>
-              </select>
-
-              {/* Actions */}
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 border rounded"
-                >
-                  Annuler
-                </button>
-
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded"
-                >
-                  Ajouter
-                </button>
-              </div>
-
-            </form>
+          <div>
+            <h2 className="font-display font-bold text-slate-800">Créer une Coopérative</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Remplissez les informations pour créer votre coopérative</p>
           </div>
         </div>
-      )}
 
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {error && (
+            <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-3 rounded-xl">{error}</div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Building2 size={12} /> Nom de la coopérative *
+            </label>
+            <input
+              name="name"
+              className="input"
+              placeholder="Ex: Coopérative Agricole de Lomé"
+              value={form.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <MapPin size={12} /> Localisation *
+            </label>
+            <input
+              name="location"
+              className="input"
+              placeholder="Ex: Lomé, Togo"
+              value={form.location}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Users size={12} /> Description
+            </label>
+            <textarea
+              name="description"
+              className="input min-h-[90px] resize-none"
+              placeholder="Décrivez les activités de votre coopérative..."
+              value={form.description}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+              <Wallet size={12} /> Adresse Wallet (optionnel)
+            </label>
+            <input
+              name="walletAddress"
+              className="input font-mono text-xs"
+              placeholder="0x..."
+              value={form.walletAddress}
+              onChange={handleChange}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary justify-center py-3 mt-2 disabled:opacity-60"
+          >
+            {loading
+              ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              : <Plus size={16} />
+            }
+            {loading ? 'Création en cours…' : 'Créer la Coopérative'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

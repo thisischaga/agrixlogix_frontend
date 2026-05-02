@@ -1,6 +1,6 @@
 // src/components/ui/Topbar.jsx
 import { Bell, RefreshCw } from 'lucide-react';
-import { currentUser } from '../../data/mockData';
+import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
 
 /**
@@ -9,12 +9,17 @@ import { getInitials } from '../../utils/formatCurrency';
  * @param {string} subtitle - Sous-titre
  */
 export default function Topbar({ title, subtitle }) {
+  const { user, currentCoop } = useAuth();
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-slate-100 px-7 py-4 flex items-center justify-between">
       {/* Title */}
       <div>
         <h1 className="font-display font-bold text-slate-800 text-lg leading-tight">{title}</h1>
         {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+        {currentCoop && (
+          <p className="text-xs text-slate-400 mt-1">Coopérative active : {currentCoop.name}</p>
+        )}
       </div>
 
       {/* Right side */}
@@ -37,7 +42,7 @@ export default function Topbar({ title, subtitle }) {
 
         {/* Avatar */}
         <div className="w-9 h-9 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold cursor-pointer">
-          {getInitials(currentUser.nom)}
+          {getInitials(user?.name || 'AG')}
         </div>
       </div>
     </header>
