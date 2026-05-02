@@ -17,7 +17,7 @@ import {
   AlertCircle,
   Share2,
   ChevronRight,
-  UserSearch
+  Search as SearchIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getInitials, formatDateShort } from '../utils/formatCurrency';
@@ -406,7 +406,7 @@ export default function Membres() {
                   ) : checkResult === 'multiple' ? (
                     <motion.div key="multiple" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
                       <div className="flex items-center gap-3 px-1">
-                        <UserSearch size={18} className="text-blue-500" />
+                        <SearchIcon size={18} className="text-blue-500" />
                         <h4 className="font-bold text-slate-800 text-sm">Plusieurs comptes trouvés :</h4>
                       </div>
                       <div className="bg-slate-50 rounded-2xl border border-slate-100 divide-y divide-slate-100 overflow-hidden max-h-[250px] overflow-y-auto shadow-inner">
