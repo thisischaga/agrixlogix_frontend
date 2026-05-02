@@ -9,33 +9,29 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [coops, setCoops] = useState([]);
   const [currentCoop, setCurrentCoopState] = useState(null);
+  const [pendingCoops, setPendingCoops] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const loadCoops = useCallback(async (userData) => {
+  const loadCoops = useCallback(async () => {
     try {
       const res = await client.get('/me/coops');
       const fetchedCoops = res.data?.memberCoops || [];
+      const fetchedPending = res.data?.pendingCoops || [];
+      
       setCoops(fetchedCoops);
+      setPendingCoops(fetchedPending);
       
       if (fetchedCoops.length > 0) {
         setCurrentCoopState(fetchedCoops[0]);
-      } else if (userData) {
-        // Auto-create a coop if none exist (Web logic)
-        try {
-          const newCoopRes = await client.post('/cooperatives', {
-            name: `Coopérative de ${userData.name.split(' ')[0]}`,
-            location: 'Togo',
-            cropType: 'Maïs'
-          });
-          setCurrentCoopState(newCoopRes.data);
-          setCoops([newCoopRes.data]);
-        } catch (e) {
-          console.error('Auto-creation failed:', e);
-        }
+      } else if (fetchedPending.length > 0) {
+        setCurrentCoopState(null); // Pas de coop active par défaut si seulement en attente
+      } else {
+        setCurrentCoopState(null);
       }
     } catch (err) {
       console.error('Erreur chargement coopératives:', err.message || err);
       setCoops([]);
+      setPendingCoops([]);
       setCurrentCoopState(null);
     }
   }, []);
@@ -49,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         client.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        loadCoops(parsedUser);
+        loadCoops();
       } catch {
         localStorage.removeItem('agrix_user');
         localStorage.removeItem('agrix_token');
@@ -69,7 +65,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('agrix_user', JSON.stringify(userData));
     client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(userData);
-    await loadCoops(userData);
+    await loadCoops();
     return userData;
   };
 
@@ -80,7 +76,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('agrix_user', JSON.stringify(newUser));
     client.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(newUser);
-    await loadCoops(newUser);
+    await loadCoops();
     return newUser;
   };
 
@@ -95,7 +91,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, coops, currentCoop, setCurrentCoop, loading, login, register, logout, loadCoops }}
+      value={{ user, coops, pendingCoops, currentCoop, setCurrentCoop, loading, login, register, logout, loadCoops }}
     >
       {children}
     </AuthContext.Provider>

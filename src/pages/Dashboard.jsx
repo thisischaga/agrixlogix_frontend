@@ -18,7 +18,7 @@ import AuditCard from '../components/cards/AuditCard';
 
 export default function Dashboard() {
   const { showToast } = useOutletContext();
-  const { user, currentCoop, coops, setCurrentCoop } = useAuth();
+  const { user, currentCoop, coops, setCurrentCoop, pendingCoops, loadCoops } = useAuth();
 
   const [stats, setStats] = useState(null);
   const [weekChart, setWeekChart] = useState([]);
@@ -86,30 +86,93 @@ export default function Dashboard() {
   const activeVotes = stats?.activeVotes ?? 0;
   const recentTx = transactions.slice(0, 5);
 
+  const handleAcceptInvite = async (coopId) => {
+    try {
+      await client.post(`/cooperatives/${coopId}/accept-invitation`);
+      showToast('Bienvenue ! Adhésion confirmée ✓');
+      loadCoops();
+    } catch (err) {
+      showToast(err.response?.data?.error || 'Erreur lors de l’acceptation');
+    }
+  };
+
   if (!currentCoop) {
+    const mainPending = pendingCoops.length > 0 ? pendingCoops[0] : null;
+
     return (
-      <div className="flex flex-col items-center justify-center gap-8 py-20 animate-in fade-in duration-700">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center text-green-600 shadow-inner"
-        >
-          <Wallet size={40} />
-        </motion.div>
-        <div className="text-center max-w-sm">
-          <h2 className="font-display font-bold text-slate-800 text-2xl mb-3">Bienvenue sur AgriLogix</h2>
-          <p className="text-slate-500 text-sm mb-8 leading-relaxed">
-            Vous n'êtes membre d'aucune coopérative active. Commencez par en créer une ou rejoignez une communauté existante.
-          </p>
-          <div className="flex flex-col gap-3">
-            <Link to="/ajout-cooperative" className="btn-primary justify-center py-3">
-              <Plus size={18} /> Créer une coopérative
-            </Link>
-            <button className="btn-outline justify-center py-3" onClick={() => showToast('Recherche de coopératives bientôt disponible')}>
-              <Users size={18} /> Rejoindre une coopérative
-            </button>
-          </div>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] gap-8 py-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {mainPending ? (
+          // CAS 2 : Invité dans une coopérative
+          <motion.div 
+            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+            className="bg-white rounded-[40px] shadow-2xl shadow-green-900/10 border border-slate-100 p-10 max-w-lg w-full text-center"
+          >
+            <div className="w-20 h-20 bg-green-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-green-600/30">
+              <Shield size={40} />
+            </div>
+            <h2 className="font-display font-bold text-slate-800 text-3xl mb-4">Invitation reçue !</h2>
+            <p className="text-slate-500 mb-10 leading-relaxed">
+              L'administrateur de <strong>{mainPending.name}</strong> vous a ajouté comme membre. 
+              Veuillez confirmer pour accéder à la gestion de la coopérative.
+            </p>
+            
+            <div className="bg-slate-50 rounded-3xl p-6 mb-10 border border-slate-100 text-left">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Détails de la coop</p>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                   <span className="text-sm text-slate-400 font-medium">Localisation</span>
+                   <span className="text-sm text-slate-800 font-bold">{mainPending.location || 'Non précisé'}</span>
+                </div>
+                <div className="flex justify-between">
+                   <span className="text-sm text-slate-400 font-medium">Culture</span>
+                   <span className="text-sm text-slate-800 font-bold">{mainPending.cropType || 'Non précisé'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={() => handleAcceptInvite(mainPending._id)}
+                className="btn-primary justify-center py-5 text-lg rounded-2xl shadow-xl shadow-green-600/30 font-bold"
+              >
+                 Accepter et Rejoindre
+              </button>
+              <button className="text-sm text-slate-400 font-bold hover:text-red-500 transition-colors uppercase tracking-widest">
+                 Décliner l'invitation
+              </button>
+            </div>
+          </motion.div>
+        ) : (
+          // CAS 1 : Aucune coopérative du tout
+          <>
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-24 h-24 bg-green-100 rounded-[32px] flex items-center justify-center text-green-600 shadow-xl shadow-green-900/5 border border-white"
+            >
+              <Plus size={48} className="animate-pulse" />
+            </motion.div>
+            <div className="text-center max-w-md px-6">
+              <h2 className="font-display font-bold text-slate-800 text-3xl mb-4">Initialisation requise</h2>
+              <p className="text-slate-500 text-base mb-10 leading-relaxed">
+                Pour accéder aux services d'AgriLogix, vous devez faire partie d'une coopérative.
+              </p>
+              <div className="flex flex-col gap-4">
+                <Link to="/ajout-cooperative" className="btn-primary justify-center py-4 text-lg rounded-2xl shadow-xl shadow-green-600/20">
+                   Créer ma propre coopérative
+                </Link>
+                <div className="flex items-center gap-4 my-2">
+                  <div className="h-px bg-slate-200 flex-1" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OU</span>
+                  <div className="h-px bg-slate-200 flex-1" />
+                </div>
+                <button className="btn-outline justify-center py-4 rounded-2xl border-slate-200 text-slate-600" onClick={() => showToast('Recherche de coopératives bientôt disponible')}>
+                   Rejoindre une coop par ID
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }

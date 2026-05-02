@@ -43,18 +43,26 @@ export default function Sidebar({ mobileOpen = false, onNavigate }) {
       </div>
 
       <nav className="flex-1 px-3 py-5 flex flex-col gap-1 overflow-y-auto">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            onClick={() => onNavigate?.()}
-            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-          >
-            <Icon size={17} />
-            {label}
-          </NavLink>
-        ))}
+        {navItems
+          .filter(item => {
+            // Si pas de coop, on ne garde que Dashboard et Settings
+            if (!currentCoop?._id) {
+              return ['Tableau de bord', 'Paramètres'].includes(item.label);
+            }
+            return true;
+          })
+          .map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              onClick={() => onNavigate?.()}
+              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+            >
+              <Icon size={17} />
+              {label}
+            </NavLink>
+          ))}
       </nav>
 
       <div className="px-3 pb-2">

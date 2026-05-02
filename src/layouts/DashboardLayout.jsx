@@ -1,6 +1,6 @@
 // src/layouts/DashboardLayout.jsx
 import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '../components/ui/Sidebar';
 import Topbar from '../components/ui/Topbar';
 import Toast from '../components/ui/Toast';
@@ -19,7 +19,14 @@ const pageMeta = {
 
 export default function DashboardLayout() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, currentCoop, loading } = useAuth();
+  
+  // Restriction : Si pas de coop et pas sur Dashboard/Settings/AjoutCoop, on redirige vers AjoutCoop
+  const isPublicPage = ['/', '/settings', '/ajout-cooperative'].includes(location.pathname);
+  if (!loading && !currentCoop?._id && !isPublicPage) {
+    return <Navigate to="/ajout-cooperative" replace />;
+  }
+
   const metaBase = pageMeta[location.pathname] || { title: 'AgriLogix', subtitle: '' };
   const firstName = user?.name?.trim?.().split(/\s+/)[0];
   const subtitle =
