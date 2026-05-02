@@ -2,16 +2,25 @@
  * Transforme une transaction du format backend vers le format frontend
  */
 export function mapTransaction(tx) {
+  const rawType = (tx.type || '').toString().toLowerCase();
+  const isCredit =
+    rawType === 'in' ||
+    rawType === 'credit' ||
+    rawType === 'entrée' ||
+    rawType === 'entree';
+
+  const hash = tx.txHash ?? tx.hash;
+
   return {
     id: tx._id,
     _id: tx._id,
-    type: tx.type === 'credit' ? 'credit' : 'debit',
-    montant: tx.amount ?? tx.montant ?? 0,
-    label: tx.description ?? tx.label ?? 'Sans description',
-    categorie: tx.category ?? tx.categorie ?? 'Autre',
-    hash: tx.hash ?? `0x${tx._id?.slice(-8).toUpperCase()}`,
+    type: isCredit ? 'credit' : 'debit',
+    montant: Number(tx.amount ?? tx.montant ?? 0) || 0,
+    label: tx.title ?? tx.description ?? tx.label ?? '—',
+    categorie: tx.category ?? tx.categorie ?? '—',
+    hash: hash ?? '—',
     bloc: tx.blockNumber ?? '—',
     date: tx.createdAt ?? tx.date,
-    statut: tx.status ?? 'confirmed',
+    statut: tx.status ?? '—',
   };
 }

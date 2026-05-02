@@ -1,7 +1,7 @@
 // src/pages/Transactions.jsx
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Filter, Download, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Download, RefreshCw, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 
 import TransactionsTable from '../components/tables/TransactionsTable';
 import client from '../api/client';
@@ -12,6 +12,10 @@ const CATEGORIES = ['Toutes', 'Vente', 'Équipement', 'Cotisation', 'Subvention'
 const TYPES      = ['Tous', 'credit', 'debit'];
 const PAGE_SIZE  = 6;
 
+function apiError(err) {
+  return err?.response?.data?.error || err?.message || 'Une erreur est survenue.';
+}
+
 export default function Transactions() {
   const { showToast } = useOutletContext();
   const { currentCoop } = useAuth();
@@ -21,21 +25,29 @@ export default function Transactions() {
   const [categorie, setCategorie] = useState('Toutes');
   const [type, setType] = useState('Tous');
   const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [newTx, setNewTx] = useState({
+    title: '',
+    amount: '',
+    type: 'in',
+    category: 'Cotisation',
+  });
+
+  const loadTransactions = useCallback(async () => {
+    if (!currentCoop?._id) return;
+    try {
+      const res = await client.get(`/cooperatives/${currentCoop._id}/transactions`);
+      setTransactions(res.data.map(mapTransaction));
+    } catch (err) {
+      console.error('Erreur chargement transactions', err.message || err);
+      showToast?.(apiError(err));
+    }
+  }, [currentCoop?._id, showToast]);
 
   useEffect(() => {
-    if (!currentCoop?._id) return;
-
-    const loadTransactions = async () => {
-      try {
-        const res = await client.get(`/cooperatives/${currentCoop._id}/transactions`);
-        setTransactions(res.data.map(mapTransaction));
-      } catch (err) {
-        console.error('Erreur chargement transactions', err.message || err);
-      }
-    };
-
     loadTransactions();
-  }, [currentCoop?._id]);
+  }, [loadTransactions]);
 
   const filtered = useMemo(() => {
     return transactions.filter((tx) => {
@@ -50,6 +62,34 @@ export default function Transactions() {
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE) || 1;
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleCreateTransaction = async (e) => {
+    e.preventDefault();
+    if (!currentCoop?._id) return;
+    const amount = Number(newTx.amount);
+    if (!newTx.title?.trim() || !amount || amount <= 0) {
+      showToast('Titre et montant valides requis.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await client.post(`/cooperatives/${currentCoop._id}/transactions`, {
+        title: newTx.title.trim(),
+        amount,
+        type: newTx.type,
+        category: newTx.category,
+      });
+      showToast('Transaction enregistrée ✓');
+      setShowModal(false);
+      setNewTx({ title: '', amount: '', type: 'in', category: newTx.category });
+      await loadTransactions();
+      setPage(1);
+    } catch (err) {
+      showToast(apiError(err));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleExport = () => {
     const csv = [
@@ -114,11 +154,14 @@ export default function Transactions() {
             <option value="debit">Sorties</option>
           </select>
 
-          <button className="btn-outline" onClick={handleExport}>
+          <button type="button" className="btn-outline" onClick={handleExport}>
             <Download size={14} /> Exporter CSV
           </button>
-          <button className="btn-primary" onClick={() => showToast('Données synchronisées avec le backend ✓')}>
-            <RefreshCw size={14} /> Synchroniser
+          <button type="button" className="btn-primary" onClick={() => loadTransactions()}>
+            <RefreshCw size={14} /> Actualiser
+          </button>
+          <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={14} /> Nouvelle transaction
           </button>
         </div>
 
@@ -164,6 +207,85 @@ export default function Transactions() {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="font-display font-bold text-slate-800">Nouvelle transaction</h3>
+              <button
+                type="button"
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"
+                onClick={() => setShowModal(false)}
+                aria-label="Fermer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateTransaction} className="p-5 flex flex-col gap-4">
+              <p className="text-xs text-slate-500">
+                Les sorties ≥ 500&nbsp;000 FCFA peuvent créer une procédure de vote côté serveur (selon règles de la coop).
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Libellé</label>
+                <input
+                  className="input"
+                  value={newTx.title}
+                  onChange={(e) => setNewTx((s) => ({ ...s, title: e.target.value }))}
+                  placeholder="Ex. Cotisation février"
+                  required
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Montant (FCFA)</label>
+                <input
+                  className="input"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={newTx.amount}
+                  onChange={(e) => setNewTx((s) => ({ ...s, amount: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Type</label>
+                <select
+                  className="input cursor-pointer"
+                  value={newTx.type}
+                  onChange={(e) => setNewTx((s) => ({ ...s, type: e.target.value }))}
+                >
+                  <option value="in">Entrée (crédit)</option>
+                  <option value="out">Sortie (débit)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Catégorie</label>
+                <select
+                  className="input cursor-pointer"
+                  value={newTx.category}
+                  onChange={(e) => setNewTx((s) => ({ ...s, category: e.target.value }))}
+                >
+                  {CATEGORIES.filter((c) => c !== 'Toutes').map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button type="button" className="btn-outline" onClick={() => setShowModal(false)}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-primary disabled:opacity-50" disabled={saving}>
+                  {saving ? 'Envoi…' : 'Enregistrer'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

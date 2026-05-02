@@ -176,7 +176,7 @@ export default function Membres() {
           <table className="w-full text-sm">
             <thead>
               <tr>
-                {['Membre', 'Rôle', 'Email', 'Inscrit le', 'Statut', ...(isAdmin ? ['Action'] : [])].map((h) => (
+                {['Membre', 'Rôle', 'Email', 'Inscrit le', ...(isAdmin ? ['Action'] : [])].map((h) => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">{h}</th>
                 ))}
               </tr>
@@ -184,11 +184,11 @@ export default function Membres() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-slate-400 text-sm">Chargement…</td>
+                  <td colSpan={isAdmin ? 5 : 4} className="text-center py-8 text-slate-400 text-sm">Chargement…</td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-slate-400 text-sm">Aucun membre trouvé.</td>
+                  <td colSpan={isAdmin ? 5 : 4} className="text-center py-8 text-slate-400 text-sm">Aucun membre trouvé.</td>
                 </tr>
               ) : filtered.map((m) => (
                 <tr key={m._id} className="border-b border-slate-50 hover:bg-green-50/40 transition-colors">
@@ -209,12 +209,8 @@ export default function Membres() {
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-xs text-slate-400">{m.email || '—'}</td>
-                  <td className="px-4 py-3.5 text-xs text-slate-500">{formatDateShort(m.createdAt)}</td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-green-500" />
-                      <span className="text-slate-700">Actif</span>
-                    </div>
+                  <td className="px-4 py-3.5 text-xs text-slate-500">
+                    {m.createdAt ? formatDateShort(m.createdAt) : '—'}
                   </td>
                   {isAdmin && (
                     <td className="px-4 py-3.5">

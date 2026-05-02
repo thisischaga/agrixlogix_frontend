@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseDisplay } from '../api/client';
-import { User, Lock, LogIn, Sprout, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
+import BrandLogo from '../components/brand/BrandLogo';
 
 function networkErrorMessage(err, fallback) {
   if (!err?.response && (err?.code === 'ERR_NETWORK' || err?.message === 'Network Error')) {
@@ -40,8 +41,8 @@ export default function Login() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-900/15">
-            <Sprout size={30} className="text-white" />
+          <div className="flex justify-center mb-4">
+            <BrandLogo variant="hero" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">AgriLogix</h1>
           <p className="text-slate-500 text-sm mt-1">Gestion coopérative décentralisée</p>

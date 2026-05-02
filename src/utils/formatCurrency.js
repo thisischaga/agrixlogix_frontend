@@ -48,12 +48,14 @@ export function formatDateShort(isoDate) {
  * @returns {string}
  */
 export function getInitials(nom) {
+  if (!nom?.trim?.()) return '?';
   return nom
-    .split(' ')
+    .split(/\s+/)
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || '?';
 }
 
 /**

@@ -1,4 +1,4 @@
-// src/components/charts/RevenueChart.jsx
+// src/components/charts/RevenueChart.jsx — données réelles depuis /revenue-expenses
 import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
@@ -16,53 +16,70 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+/**
+ * @param {{ weekData?: Array<{ jour: string; revenus: number; depenses: number }>, monthData?: typeof weekData }} props
+ */
 export default function RevenueChart({ weekData = [], monthData = [] }) {
   const [period, setPeriod] = useState('semaine');
   const data = period === 'semaine' ? weekData : monthData;
 
   return (
-    <div className="card">
-      <div className="flex items-start justify-between mb-4">
+    <div className="card h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
         <div>
-          <h3 className="font-display font-bold text-slate-800 text-base">Revenus vs Dépenses</h3>
-          <p className="text-xs text-slate-400 mt-0.5">Performance de la coopérative</p>
+          <h3 className="font-display font-bold text-slate-800 text-base">Revenus vs dépenses</h3>
+          <p className="text-xs text-slate-400 mt-0.5">Performance hebdomadaire ou mensuelle de la coopérative</p>
         </div>
-        <div className="flex gap-1.5">
-          {['semaine', 'mois'].map((p) => (
+        <div className="flex gap-1.5 shrink-0">
+          {[
+            { key: 'semaine', label: 'Semaine' },
+            { key: 'mois', label: 'Mois' },
+          ].map(({ key, label }) => (
             <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border-none cursor-pointer ${
-                period === p
-                  ? 'bg-green-600 text-white'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+              key={key}
+              type="button"
+              onClick={() => setPeriod(key)}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border-none cursor-pointer ${
+                period === key
+                  ? 'bg-green-600 text-white shadow-md shadow-green-900/15'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              {p.charAt(0).toUpperCase() + p.slice(1)}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data} barSize={20} barGap={4}>
-          <XAxis
-            dataKey="jour"
-            tick={{ fontSize: 11, fill: '#94a3b8' }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <YAxis hide />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="revenus"  fill="#16a34a" radius={[6, 6, 0, 0]} name="Revenus"   />
-          <Bar dataKey="depenses" fill="#bbf7d0" radius={[6, 6, 0, 0]} name="Dépenses"  />
-          <Legend
-            iconType="circle"
-            iconSize={8}
-            wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="flex-1 min-h-[220px]">
+        {!data?.length ? (
+          <div className="h-full flex items-center justify-center text-sm text-slate-400 rounded-xl bg-slate-50 border border-dashed border-slate-200">
+            Aucune donnée pour cette période.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+              <XAxis
+                dataKey="jour"
+                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={false}
+              />
+              <YAxis hide />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(16, 185, 129, 0.06)' }} />
+              <Bar dataKey="revenus" fill="#15803d" radius={[8, 8, 0, 0]} name="Revenus" maxBarSize={28} />
+              <Bar dataKey="depenses" fill="#bbf7d0" radius={[8, 8, 0, 0]} name="Dépenses" maxBarSize={28} />
+              <Legend
+                verticalAlign="top"
+                align="right"
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{ fontSize: 12, paddingBottom: 8 }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
     </div>
   );
 }

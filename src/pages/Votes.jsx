@@ -1,16 +1,20 @@
 // src/pages/Votes.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, CheckCircle, XCircle, Clock, Shield } from 'lucide-react';
+import { Plus, CheckCircle, XCircle, Clock, Shield, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
+
+function apiError(err) {
+  return err?.response?.data?.error || err?.message || 'Une erreur est survenue.';
+}
 
 function formatDeadline(expiresAt) {
   if (!expiresAt) return 'Date non définie';
   return new Date(expiresAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-function PropositionCard({ prop, onVote, voted }) {
+function PropositionCard({ prop, onVote, votedLabel, serverHasVoted }) {
   const totalVotes = prop.yesVotes + prop.noVotes;
   const yesPct = totalVotes > 0 ? Math.round((prop.yesVotes / totalVotes) * 100) : 0;
   const noPct = 100 - yesPct;
@@ -57,9 +61,12 @@ function PropositionCard({ prop, onVote, voted }) {
         </div>
       </div>
 
-      {voted ? (
+      {votedLabel || serverHasVoted ? (
         <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-center text-sm font-bold text-green-700">
-          ✓ Vote "{voted}" enregistré
+          ✓{' '}
+          {votedLabel
+            ? `Vote « ${votedLabel} » enregistré`
+            : 'Vous avez déjà voté sur cette proposition'}
         </div>
       ) : (
         <div className="flex gap-2.5">
@@ -80,7 +87,8 @@ function PropositionCard({ prop, onVote, voted }) {
 
       <div className="flex items-center justify-center gap-2 text-[10px] text-slate-400 font-medium">
         <Shield size={11} />
-        Smart Contract · Polygon · {prop.expiresAt ? `Se termine le ${formatDeadline(prop.expiresAt)}` : 'Sans échéance'}
+        Vote coopératif
+        {prop.expiresAt ? ` · avant le ${formatDeadline(prop.expiresAt)}` : ''}
       </div>
     </div>
   );
@@ -88,24 +96,28 @@ function PropositionCard({ prop, onVote, voted }) {
 
 export default function Votes() {
   const { showToast } = useOutletContext();
-  const { currentCoop } = useAuth();
+  const { currentCoop, user } = useAuth();
   const [votes, setVotes] = useState([]);
   const [voted, setVoted] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [propTitle, setPropTitle] = useState('');
+  const [propDesc, setPropDesc] = useState('');
+
+  const loadVotes = useCallback(async () => {
+    if (!currentCoop?._id) return;
+    try {
+      const res = await client.get(`/cooperatives/${currentCoop._id}/votes`);
+      setVotes(res.data);
+    } catch (err) {
+      console.error('Erreur chargement des votes', err.message || err);
+      showToast?.(apiError(err));
+    }
+  }, [currentCoop?._id, showToast]);
 
   useEffect(() => {
-    if (!currentCoop?._id) return;
-
-    const loadVotes = async () => {
-      try {
-        const res = await client.get(`/cooperatives/${currentCoop._id}/votes`);
-        setVotes(res.data);
-      } catch (err) {
-        console.error('Erreur chargement des votes', err.message || err);
-      }
-    };
-
     loadVotes();
-  }, [currentCoop?._id]);
+  }, [loadVotes]);
 
   const handleVote = async (voteId, choice) => {
     try {
@@ -115,7 +127,28 @@ export default function Votes() {
       setVoted((prev) => ({ ...prev, [voteId]: choice }));
       showToast(`Vote "${choice}" enregistré ✓`);
     } catch (err) {
-      showToast(err.message || 'Impossible d’enregistrer le vote');
+      showToast(apiError(err));
+    }
+  };
+
+  const handleCreateProposal = async (e) => {
+    e.preventDefault();
+    if (!currentCoop?._id || !propTitle.trim()) return;
+    setSaving(true);
+    try {
+      await client.post(`/cooperatives/${currentCoop._id}/proposals`, {
+        title: propTitle.trim(),
+        description: propDesc.trim() || undefined,
+      });
+      showToast('Proposition créée ✓');
+      setPropTitle('');
+      setPropDesc('');
+      setShowModal(false);
+      await loadVotes();
+    } catch (err) {
+      showToast(apiError(err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -139,12 +172,9 @@ export default function Votes() {
             {activeVotes.length} proposition(s) active(s)
           </p>
         </div>
-        <button
-          className="btn-primary"
-          onClick={() => showToast('Formulaire de nouvelle proposition ouvert')}
-        >
+        <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
           <Plus size={16} />
-          Nouvelle Proposition
+          Nouvelle proposition
         </button>
       </div>
 
@@ -156,14 +186,21 @@ export default function Votes() {
           <div className="card text-center text-slate-500 py-12">Aucune proposition active trouvée.</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            {activeVotes.map((vote) => (
-              <PropositionCard
-                key={vote._id}
-                prop={vote}
-                voted={voted[vote._id]}
-                onVote={handleVote}
-              />
-            ))}
+            {activeVotes.map((vote) => {
+              const serverHasVoted =
+                !!user &&
+                Array.isArray(vote.votedMembers) &&
+                vote.votedMembers.some((id) => String(id) === String(user._id));
+              return (
+                <PropositionCard
+                  key={vote._id}
+                  prop={vote}
+                  votedLabel={voted[vote._id]}
+                  serverHasVoted={serverHasVoted}
+                  onVote={handleVote}
+                />
+              );
+            })}
           </div>
         )}
       </section>
@@ -210,6 +247,54 @@ export default function Votes() {
           </table>
         </div>
       </section>
+
+      {showModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="font-display font-bold text-slate-800">Nouvelle proposition</h3>
+              <button
+                type="button"
+                className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 border-none bg-transparent cursor-pointer"
+                onClick={() => setShowModal(false)}
+                aria-label="Fermer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateProposal} className="p-5 flex flex-col gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Titre</label>
+                <input
+                  className="input"
+                  value={propTitle}
+                  onChange={(e) => setPropTitle(e.target.value)}
+                  placeholder="Ex. Achat d’irrigation"
+                  required
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Description</label>
+                <textarea
+                  className="input min-h-[120px] resize-y"
+                  value={propDesc}
+                  onChange={(e) => setPropDesc(e.target.value)}
+                  placeholder="Contexte, montant estimé, impact…"
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button type="button" className="btn-outline" onClick={() => setShowModal(false)}>
+                  Annuler
+                </button>
+                <button type="submit" className="btn-primary disabled:opacity-50" disabled={saving}>
+                  {saving ? 'Envoi…' : 'Soumettre au vote'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
