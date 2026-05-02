@@ -2,6 +2,7 @@
 import { Bell, Menu, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
+import BrandLogo from '../brand/BrandLogo';
 
 /**
  * Barre supérieure (style tableau de bord coop : accueil, réseau, profil).
@@ -21,6 +22,10 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
           >
             <Menu size={22} strokeWidth={2} />
           </button>
+          {/* Logo visible en maquette mobile (sidebar masquée) ; déjà présent dans la sidebar ≥ lg */}
+          <div className="mt-0.5 shrink-0 lg:hidden" aria-hidden>
+            <BrandLogo variant="sidebar" />
+          </div>
           <div className="min-w-0 flex-1">
             <h1 className="font-display font-bold text-slate-800 text-lg sm:text-xl leading-tight truncate">
               {title}

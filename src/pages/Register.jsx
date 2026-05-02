@@ -2,18 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseDisplay } from '../api/client';
-import { User, UserPlus, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, ChevronRight, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import BrandLogo from '../components/brand/BrandLogo';
+import { motion } from 'framer-motion';
 
-const PASSWORD_HINT =
-  '8+ caractères : majuscule, minuscule, chiffre et caractère spécial.';
-
-function networkErrorMessage(err, fallback) {
-  if (!err?.response && (err?.code === 'ERR_NETWORK' || err?.message === 'Network Error')) {
-    return `Serveur injoignable (${getApiBaseDisplay()}). Démarrez MBH-Backend : npm run dev (port 4000).`;
-  }
-  return err?.response?.data?.error || fallback;
-}
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,64}$/;
+const PASSWORD_HINT = '8+ caractères : majuscule, minuscule, chiffre et caractère spécial.';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -30,125 +24,125 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (password !== confirm) {
-      setError('Les mots de passe ne correspondent pas.');
-      return;
-    }
+
+    if (!name.trim()) return setError('Veuillez entrer votre nom complet.');
+    if (password !== confirm) return setError('Les mots de passe ne correspondent pas.');
+    if (!PASSWORD_REGEX.test(password)) return setError('Mot de passe trop faible. ' + PASSWORD_HINT);
+
     setLoading(true);
     try {
       await register({ name: name.trim(), password });
       navigate('/');
     } catch (err) {
-      setError(networkErrorMessage(err, 'Impossible de créer le compte.'));
+      setError(err.response?.data?.error || 'Impossible de créer le compte.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <BrandLogo variant="hero" />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">AgriLogix</h1>
-          <p className="text-slate-500 text-sm mt-1">Créer votre compte</p>
+    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+      <motion.div 
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="w-full max-w-[400px]"
+      >
+        {/* Logo Section */}
+        <div className="flex flex-col items-center mb-10 text-center">
+          <BrandLogo variant="hero" />
+          <h1 className="text-[32px] font-[800] text-[#0F172A] tracking-tighter mt-4 leading-none">AgriLogix</h1>
+          <p className="text-[13px] text-[#64748B] font-medium mt-2">Gérez votre coopérative du bout des doigts</p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-slate-900 font-bold text-xl mb-6">Inscription</h2>
+        <div className="space-y-6">
+          <div className="flex items-center gap-3">
+            <Link to="/login" className="p-2 hover:bg-slate-100 rounded-full text-[#0F172A] transition-colors">
+              <ArrowLeft size={20} />
+            </Link>
+            <h2 className="text-[22px] font-[800] text-[#0F172A]">Inscription</h2>
+          </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-700 text-sm p-3 rounded-xl">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-red-50 border border-red-100 text-red-600 text-[13px] font-semibold p-4 rounded-xl"
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Nom complet</label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all text-sm"
-                  placeholder="ex. Koffi Amivi"
-                  required
-                  autoComplete="name"
-                />
-              </div>
+            <div className="relative group">
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] group-focus-within:text-[#1B6B3A]" size={20} />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full h-[56px] pl-12 pr-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#1B6B3A] focus:ring-1 focus:ring-[#1B6B3A] transition-all text-base font-medium"
+                placeholder="Nom complet"
+                required
+              />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Mot de passe</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-                <input
-                  type={showPwd ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all text-sm"
-                  placeholder="••••••••"
-                  required
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd(!showPwd)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors bg-transparent border-none cursor-pointer p-0"
-                  aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                >
-                  {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-500 leading-snug">{PASSWORD_HINT}</p>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] group-focus-within:text-[#1B6B3A]" size={20} />
+              <input
+                type={showPwd ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full h-[56px] pl-12 pr-12 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#1B6B3A] focus:ring-1 focus:ring-[#1B6B3A] transition-all text-base font-medium"
+                placeholder="Mot de passe"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPwd(!showPwd)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#0F172A] bg-transparent border-none cursor-pointer p-0"
+              >
+                {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Confirmer le mot de passe</label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
-                <input
-                  type={showPwd ? 'text' : 'password'}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all text-sm"
-                  placeholder="••••••••"
-                  required
-                  autoComplete="new-password"
-                />
-              </div>
+            <div className="relative group">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748B] group-focus-within:text-[#1B6B3A]" size={20} />
+              <input
+                type={showPwd ? 'text' : 'password'}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className="w-full h-[56px] pl-12 pr-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[#0F172A] placeholder-[#64748B] focus:outline-none focus:border-[#1B6B3A] focus:ring-1 focus:ring-[#1B6B3A] transition-all text-base font-medium"
+                placeholder="Confirmer le mot de passe"
+                required
+              />
             </div>
+
+            <p className="text-[11px] text-[#64748B] leading-tight font-medium px-1">
+              {PASSWORD_HINT}
+            </p>
 
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm border-none cursor-pointer"
+              className="h-[56px] w-full bg-[#1B6B3A] hover:bg-[#15522c] disabled:opacity-50 text-white font-[700] rounded-xl flex items-center justify-center transition-all shadow-md mt-2 border-none cursor-pointer"
             >
               {loading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <UserPlus size={17} />
+                <span className="text-base">Créer mon compte</span>
               )}
-              {loading ? 'Création…' : 'Créer mon compte'}
             </button>
           </form>
 
-          <div className="mt-7 pt-6 border-t border-slate-100 text-center">
-            <p className="text-sm text-slate-500">
+          <div className="text-center pt-4">
+            <p className="text-[14px] font-semibold text-[#64748B]">
               Déjà inscrit ?{' '}
-              <Link to="/login" className="text-green-700 font-semibold hover:text-green-800 transition-colors">
+              <Link to="/login" className="text-[#1B6B3A] hover:underline">
                 Se connecter
               </Link>
             </p>
           </div>
         </div>
-
-        <p className="text-center text-slate-400 text-xs mt-6">CoopLedger · {getApiBaseDisplay()}</p>
-      </div>
+      </motion.div>
     </div>
   );
 }

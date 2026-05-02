@@ -1,35 +1,31 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useOutletContext, Link } from 'react-router-dom';
 import {
-  Wallet,
-  TrendingUp,
-  TrendingDown,
-  Users,
-  RefreshCw,
-  Plus,
+  Wallet, TrendingUp, TrendingDown, Users, RefreshCw,
+  Plus, Bell, Shield, ArrowUpRight, ClipboardList, Activity
 } from 'lucide-react';
+import { io } from 'socket.io-client';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import { useAuth } from '../context/AuthContext';
-import client from '../api/client';
+import client, { getSocketOrigin } from '../api/client';
 import { formatCurrency, formatDateShort } from '../utils/formatCurrency';
 import { mapTransaction } from '../utils/apiMappings';
-import { Link } from 'react-router-dom';
+
 import RevenueChart from '../components/charts/RevenueChart';
 import QuickActions from '../components/cards/QuickActions';
 import AuditCard from '../components/cards/AuditCard';
 
-function apiError(err) {
-  return err?.response?.data?.error || err?.message || 'Chargement impossible.';
-}
-
 export default function Dashboard() {
   const { showToast } = useOutletContext();
-  const { currentCoop, coops, setCurrentCoop } = useAuth();
+  const { user, currentCoop, coops, setCurrentCoop } = useAuth();
 
   const [stats, setStats] = useState(null);
   const [weekChart, setWeekChart] = useState([]);
   const [monthChart, setMonthChart] = useState([]);
   const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [socketConnected, setSocketConnected] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!currentCoop?._id) return;
@@ -48,7 +44,7 @@ export default function Dashboard() {
       setTransactions((txRes.data || []).map(mapTransaction));
     } catch (err) {
       console.error(err);
-      showToast?.(apiError(err));
+      showToast?.(err.response?.data?.error || 'Erreur de chargement');
     } finally {
       setLoading(false);
     }
@@ -58,171 +54,221 @@ export default function Dashboard() {
     fetchData();
   }, [fetchData]);
 
+  // Real-time updates with Socket.io
+  useEffect(() => {
+    if (!currentCoop?._id || !user?._id) return;
+
+    const socket = io(getSocketOrigin(), {
+      transports: ['websocket'],
+      auth: { userId: user._id }
+    });
+
+    socket.on('connect', () => {
+      setSocketConnected(true);
+      socket.emit('join_coop', currentCoop._id);
+    });
+
+    socket.on('disconnect', () => setSocketConnected(false));
+
+    socket.on('stats_update', (payload) => {
+      setStats((prev) => prev ? { ...prev, ...payload } : prev);
+      if (payload.newTransaction) {
+        setTransactions(prev => [mapTransaction(payload.newTransaction), ...prev.slice(0, 9)]);
+      }
+    });
+
+    return () => socket.disconnect();
+  }, [currentCoop?._id, user?._id]);
+
   const balance = stats?.balance ?? 0;
   const growth = Number(stats?.growthRate ?? 0);
   const membersCount = stats?.membersCount ?? 0;
+  const activeVotes = stats?.activeVotes ?? 0;
   const recentTx = transactions.slice(0, 5);
-
-  const bc = stats?.blockchain;
 
   if (!currentCoop) {
     return (
-      <div className="flex flex-col items-center justify-center gap-6 py-16">
-        <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center">
-          <Wallet size={28} className="text-green-600" />
-        </div>
-        <div className="text-center">
-          <h2 className="font-bold text-slate-800 text-xl mb-2">Aucune coopérative trouvée</h2>
-          <p className="text-slate-500 text-sm mb-6">Rejoignez ou créez une coopérative pour accéder à votre tableau de bord.</p>
-          <Link to="/ajout-cooperative" className="btn-primary">
-            <Plus size={16} /> Créer une coopérative
-          </Link>
+      <div className="flex flex-col items-center justify-center gap-8 py-20 animate-in fade-in duration-700">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center text-green-600 shadow-inner"
+        >
+          <Wallet size={40} />
+        </motion.div>
+        <div className="text-center max-w-sm">
+          <h2 className="font-display font-bold text-slate-800 text-2xl mb-3">Bienvenue sur AgriLogix</h2>
+          <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+            Vous n'êtes membre d'aucune coopérative active. Commencez par en créer une ou rejoignez une communauté existante.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Link to="/ajout-cooperative" className="btn-primary justify-center py-3">
+              <Plus size={18} /> Créer une coopérative
+            </Link>
+            <button className="btn-outline justify-center py-3" onClick={() => showToast('Recherche de coopératives bientôt disponible')}>
+              <Users size={18} /> Rejoindre une coopérative
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-5 lg:gap-6">
-      {coops.length > 1 && (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 w-full">
-          <span className="text-xs text-slate-500 font-semibold shrink-0">Coopérative :</span>
+    <div className="flex flex-col gap-6 pb-10">
+      {/* Header Mobile-Inspired */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:block">
+            <h1 className="font-display font-bold text-slate-800 text-2xl tracking-tight">Tableau de bord</h1>
+            <p className="text-xs text-slate-400 font-medium">Bon retour, {user?.name?.split(' ')[0]}</p>
+          </div>
+          <div className="h-8 w-px bg-slate-200 hidden sm:block mx-2" />
+          <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-100 shadow-sm">
+            <div className={`w-2 h-2 rounded-full ${socketConnected ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`} />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              {socketConnected ? 'Réseau Actif' : 'Hors-ligne'}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
           <select
-            className="input text-sm py-2 sm:py-1.5 w-full sm:min-w-[220px] sm:w-auto"
+            className="input text-xs py-2 min-w-[180px] bg-white shadow-sm cursor-pointer"
             value={currentCoop._id}
             onChange={(e) => setCurrentCoop(coops.find((c) => c._id === e.target.value))}
           >
-            {coops.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
+            {coops.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
+          <button className="p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-green-600 transition-all shadow-sm">
+            <Bell size={18} />
+          </button>
         </div>
-      )}
+      </div>
 
-      {/* Rangée type CoopLedger : Trésorerie | Membres | Audit */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
-        <div className="card relative overflow-hidden border-slate-100 shadow-md">
-          <div className="flex items-start justify-between gap-3">
+      {/* Main Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* Treasury Card */}
+        <motion.div
+          whileHover={{ y: -4 }}
+          className="card bg-white border-none shadow-xl shadow-green-900/5 p-6 relative overflow-hidden"
+        >
+          <div className="flex justify-between items-start mb-6">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Trésorerie</p>
-              <p className="font-display text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
-                {stats ? formatCurrency(balance) : '—'}
-              </p>
-              <div
-                className={`inline-flex items-center gap-1.5 mt-3 text-sm font-bold ${
-                  growth >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}
-              >
-                {growth >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
-                <span>
-                  {growth >= 0 ? '+' : ''}
-                  {growth.toFixed(1).replace(/\.0$/, '')}% <span className="font-semibold text-slate-500">vs mois préc.</span>
-                </span>
-              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-1">Trésorerie Totale</p>
+              <h3 className="font-display text-3xl font-bold text-slate-900">
+                {loading ? '—' : formatCurrency(balance)}
+              </h3>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center shrink-0">
-              <Wallet size={24} className="text-green-700" />
+            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
+              <Wallet size={24} />
             </div>
           </div>
-          <p className="text-xs text-slate-400 mt-4 pt-4 border-t border-slate-100">
-            {currentCoop.name} · {stats?.totalTransactions ?? 0} opérations enregistrées
-          </p>
-        </div>
-
-        <div className="card flex flex-col justify-center border-slate-100 shadow-md min-h-[160px]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Membres</p>
-              <p className="font-display text-4xl sm:text-5xl font-bold text-slate-900">
-                {stats ? membersCount : '—'}
-              </p>
-              <p className="text-xs text-slate-500 mt-2 font-medium">Membres actifs de la coopérative</p>
+          <div className="flex items-center gap-2">
+            <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+              {growth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+              {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
-              <Users size={28} className="text-blue-600" />
+            <span className="text-[11px] text-slate-400 font-medium">vs mois dernier</span>
+          </div>
+          <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-green-900">
+            <Activity size={120} />
+          </div>
+        </motion.div>
+
+        {/* Members & Votes */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="card bg-blue-50/50 border-blue-100 flex flex-col justify-between p-5">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+              <Users size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Membres</p>
+              <p className="font-display text-2xl font-bold text-slate-800">{membersCount}</p>
+            </div>
+          </div>
+          <div className="card bg-amber-50/50 border-amber-100 flex flex-col justify-between p-5">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm">
+              <ClipboardList size={20} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">Votes Actifs</p>
+              <p className="font-display text-2xl font-bold text-slate-800">{activeVotes}</p>
             </div>
           </div>
         </div>
 
-        <div className="md:col-span-2 xl:col-span-1">
+        {/* Audit Card */}
+        <div className="lg:col-span-1">
           <AuditCard
-            dernierBloc={bc?.lastBlock ?? '—'}
-            validateursLibelle={bc?.validators ?? '—'}
-            consensus={bc?.consensus ?? bc?.status ?? '—'}
+            dernierBloc={stats?.blockchain?.lastBlock ?? '—'}
+            validateursLibelle={stats?.blockchain?.validators ?? '—'}
+            consensus={stats?.blockchain?.status ?? '—'}
             onAction={(msg) => showToast?.(msg)}
           />
         </div>
       </div>
 
-      {/* Graphique + actions */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 lg:gap-5 items-stretch">
-        <div className="xl:col-span-8 min-h-0">
+      {/* Charts & Actions Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        <div className="xl:col-span-8">
           <RevenueChart weekData={weekChart} monthData={monthChart} />
         </div>
-        <div className="xl:col-span-4 min-h-0">
+        <div className="xl:col-span-4">
           <QuickActions />
         </div>
       </div>
 
-      {/* Dernières transactions */}
-      <div className="card border-slate-100 shadow-md">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <h2 className="font-display font-bold text-slate-800 text-base">Dernières transactions</h2>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={fetchData}
-              className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 hover:text-green-600 hover:bg-green-50 transition-all cursor-pointer"
-              aria-label="Actualiser"
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            </button>
-            <Link to="/transactions" className="text-xs text-green-600 font-semibold hover:underline">
-              Voir tout →
-            </Link>
-          </div>
+      {/* Recent Transactions Table */}
+      <div className="card bg-white shadow-sm border-slate-100">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-display font-bold text-slate-800 flex items-center gap-2">
+            Dernières transactions
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          </h2>
+          <Link to="/transactions" className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-1 group">
+            Tout voir <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
         </div>
 
-        {recentTx.length === 0 ? (
-          <p className="text-sm text-slate-400 text-center py-10 rounded-xl bg-slate-50 border border-dashed border-slate-200">
-            Aucune transaction pour l’instant. Utilisez « Actions rapides » ou la page Transactions.
-          </p>
-        ) : (
-          <div className="flex flex-col divide-y divide-slate-100">
-            {recentTx.map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between py-3.5 gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      tx.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                    }`}
-                  >
-                    {tx.type === 'credit' ? (
-                      <TrendingUp size={18} className="text-green-600" />
-                    ) : (
-                      <TrendingDown size={18} className="text-red-500" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-slate-800 truncate">{tx.label}</p>
-                    <p className="text-xs text-slate-400 font-mono truncate">{tx.hash}</p>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <p
-                    className={`text-sm font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-500'}`}
-                  >
-                    {tx.type === 'credit' ? '+' : '-'}
-                    {formatCurrency(tx.montant)}
-                  </p>
-                  <p className="text-xs text-slate-400">{formatDateShort(tx.date)}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-50">
+              <tr>
+                <th className="text-left py-3 px-2">Description</th>
+                <th className="text-left py-3 px-2">Date</th>
+                <th className="text-right py-3 px-2">Montant</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {recentTx.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="py-10 text-center text-slate-400 italic">Aucune transaction récente</td>
+                </tr>
+              ) : (
+                recentTx.map((tx) => (
+                  <tr key={tx.id} className="group hover:bg-slate-50/50 transition-colors">
+                    <td className="py-4 px-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tx.type === 'credit' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                          {tx.type === 'credit' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-800 truncate">{tx.label}</p>
+                          <p className="text-[10px] text-slate-400 font-mono truncate">{tx.hash}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-2 text-slate-500 text-xs">{formatDateShort(tx.date)}</td>
+                    <td className={`py-4 px-2 text-right font-bold ${tx.type === 'credit' ? 'text-green-600' : 'text-red-500'}`}>
+                      {tx.type === 'credit' ? '+' : '-'}{formatCurrency(tx.montant)}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

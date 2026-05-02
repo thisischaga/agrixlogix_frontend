@@ -3,12 +3,13 @@ import { Shield, FileText } from 'lucide-react';
 
 /**
  * Données issues de l’API uniquement ; pas de valeurs fictives.
- * @param {{ dernierBloc?: string, validateursLibelle?: string, consensus?: string, onAction?: (msg: string) => void }} props
+ * @param {{ dernierBloc?: string, validateursLibelle?: string, consensus?: string, etatConnexion?: string, onAction?: (msg: string) => void }} props
  */
 export default function AuditCard({
   dernierBloc = '—',
   validateursLibelle = '—',
   consensus = '—',
+  etatConnexion = '—',
   onAction,
 }) {
   return (
@@ -24,7 +25,8 @@ export default function AuditCard({
         {[
           { label: 'Dernier Bloc', value: dernierBloc, mono: true },
           { label: 'Validateurs', value: validateursLibelle, mono: false },
-          { label: 'Consensus', value: consensus, green: true },
+          { label: 'Consensus', value: consensus, green: false },
+          { label: 'État réseau', value: etatConnexion, green: true },
         ].map(({ label, value, mono, green }) => (
           <div key={label} className="flex items-center justify-between gap-4">
             <span className="text-sm text-slate-500 shrink-0">{label}</span>

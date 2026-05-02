@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from '../layouts/DashboardLayout';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 import Dashboard    from '../pages/Dashboard';
@@ -19,7 +19,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected — ProtectedRoute renders <Outlet />, DashboardLayout is the layout */}
+      {/* Protected */}
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index               element={<Dashboard />} />
