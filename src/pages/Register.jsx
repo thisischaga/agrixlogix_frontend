@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getApiBaseDisplay } from '../api/client';
-import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, UserPlus, Lock, Eye, EyeOff } from 'lucide-react';
 import BrandLogo from '../components/brand/BrandLogo';
 
 const PASSWORD_HINT =
