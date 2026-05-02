@@ -11,6 +11,7 @@ export const AuthProvider = ({ children }) => {
   const [currentCoop, setCurrentCoopState] = useState(null);
   const [pendingCoops, setPendingCoops] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [unreadForumCount, setUnreadForumCount] = useState(0);
 
   const loadCoops = useCallback(async () => {
     try {
@@ -35,6 +36,32 @@ export const AuthProvider = ({ children }) => {
       setCurrentCoopState(null);
     }
   }, []);
+
+  const loadForumStats = useCallback(async (coopId) => {
+    if (!coopId) return;
+    try {
+      const res = await client.get(`/cooperatives/${coopId}/forums`);
+      const threads = res.data || [];
+      const stored = localStorage.getItem(`read_counts_${user?._id}`);
+      const readCounts = stored ? JSON.parse(stored) : {};
+      
+      let total = 0;
+      threads.forEach(t => {
+        const lastRead = readCounts[t._id] || 0;
+        const diff = (t.postCount || 0) - lastRead;
+        if (diff > 0) total += diff;
+      });
+      setUnreadForumCount(total);
+    } catch (err) {
+      console.error('Forum stats error:', err);
+    }
+  }, [user?._id]);
+
+  useEffect(() => {
+    if (currentCoop?._id) {
+      loadForumStats(currentCoop._id);
+    }
+  }, [currentCoop?._id, loadForumStats]);
 
   // Restore session on mount
   useEffect(() => {
@@ -91,7 +118,11 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, coops, pendingCoops, currentCoop, setCurrentCoop, loading, login, register, logout, loadCoops }}
+      value={{ 
+        user, coops, pendingCoops, currentCoop, setCurrentCoop, 
+        loading, login, register, logout, loadCoops,
+        unreadForumCount, setUnreadForumCount
+      }}
     >
       {children}
     </AuthContext.Provider>

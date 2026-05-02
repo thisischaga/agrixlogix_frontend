@@ -96,8 +96,27 @@ export default function Dashboard() {
     }
   };
 
-  const [newCoop, setNewCoop] = useState({ name: '', location: '', cropType: '' });
-  const [creating, setCreating] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [auditResult, setAuditResult] = useState(null);
+
+  const verifyBlockchain = async () => {
+    if (!currentCoop?._id) return;
+    setVerifying(true);
+    try {
+      const res = await client.get(`/cooperatives/${currentCoop._id}/blockchain/verify`);
+      setAuditResult(res.data);
+      if (res.data.isValid) {
+        showToast('Blockchain vérifiée : Intégrité 100% ✓');
+      } else {
+        showToast('Alerte : Anomalie détectée dans la chaîne !', 'error');
+      }
+      setTimeout(() => setAuditResult(null), 8000);
+    } catch (err) {
+      showToast('Erreur lors de l’audit blockchain');
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const handleCreateCoop = async (e) => {
     e.preventDefault();
@@ -325,6 +344,10 @@ export default function Dashboard() {
             dernierBloc={stats?.blockchain?.lastBlock ?? '—'}
             validateursLibelle={stats?.blockchain?.validators ?? '—'}
             consensus={stats?.blockchain?.status ?? '—'}
+            etatConnexion={socketConnected ? 'Connecté' : 'Hors-ligne'}
+            verifying={verifying}
+            auditResult={auditResult}
+            onVerify={verifyBlockchain}
             onAction={(msg) => showToast?.(msg)}
           />
         </div>

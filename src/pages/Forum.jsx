@@ -32,7 +32,7 @@ function ThreadRow({ thread, active, onSelect }) {
 
 export default function Forum() {
   const { showToast } = useOutletContext();
-  const { user, currentCoop } = useAuth();
+  const { user, currentCoop, unreadForumCount, setUnreadForumCount } = useAuth();
 
   const [threads, setThreads] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -279,6 +279,22 @@ export default function Forum() {
                   active={activeThread?._id === t._id}
                   onSelect={(thr) => {
                     setActiveThread(thr);
+                    // Mark as read
+                    const stored = localStorage.getItem(`read_counts_${user._id}`);
+                    const readCounts = stored ? JSON.parse(stored) : {};
+                    readCounts[thr._id] = thr.postCount || 0;
+                    localStorage.setItem(`read_counts_${user._id}`, JSON.stringify(readCounts));
+                    
+                    // Update global count
+                    if (typeof setUnreadForumCount === 'function') {
+                      const newTotal = threads.reduce((acc, current) => {
+                        const lastRead = current._id === thr._id ? (current.postCount || 0) : (readCounts[current._id] || 0);
+                        const diff = (current.postCount || 0) - lastRead;
+                        return acc + (diff > 0 ? diff : 0);
+                      }, 0);
+                      setUnreadForumCount(newTotal);
+                    }
+
                     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }

@@ -1,27 +1,40 @@
 // src/components/cards/AuditCard.jsx
-import { Shield, FileText } from 'lucide-react';
+import { Shield, FileText, CheckCircle2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 /**
  * Données issues de l’API uniquement ; pas de valeurs fictives.
- * @param {{ dernierBloc?: string, validateursLibelle?: string, consensus?: string, etatConnexion?: string, onAction?: (msg: string) => void }} props
+ * @param {{ dernierBloc?: string, validateursLibelle?: string, consensus?: string, etatConnexion?: string, verifying?: boolean, auditResult?: any, onVerify?: () => void, onAction?: (msg: string) => void }} props
  */
 export default function AuditCard({
   dernierBloc = '—',
   validateursLibelle = '—',
   consensus = '—',
   etatConnexion = '—',
+  verifying = false,
+  auditResult = null,
+  onVerify,
   onAction,
 }) {
   return (
-    <div className="card">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
-          <Shield size={16} className="text-green-600" />
+    <div className="card h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-green-100 rounded-xl flex items-center justify-center">
+            <Shield size={16} className="text-green-600" />
+          </div>
+          <h3 className="font-display font-bold text-slate-800 text-base">Audit Blockchain</h3>
         </div>
-        <h3 className="font-display font-bold text-slate-800 text-base">Audit Blockchain</h3>
+        <button 
+          onClick={onVerify}
+          disabled={verifying}
+          className={`p-2 rounded-lg hover:bg-slate-50 transition-all ${verifying ? 'animate-spin' : ''}`}
+          title="Vérifier l'intégrité"
+        >
+          <RefreshCw size={16} className="text-slate-400" />
+        </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 flex-1">
         {[
           { label: 'Dernier Bloc', value: dernierBloc, mono: true },
           { label: 'Validateurs', value: validateursLibelle, mono: false },
@@ -38,6 +51,13 @@ export default function AuditCard({
           </div>
         ))}
       </div>
+
+      {auditResult && (
+        <div className={`mt-4 p-3 rounded-xl text-xs flex items-center gap-2 animate-in fade-in zoom-in duration-300 ${auditResult.isValid ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+          {auditResult.isValid ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+          <span className="font-bold">{auditResult.message}</span>
+        </div>
+      )}
 
       <button
         type="button"
