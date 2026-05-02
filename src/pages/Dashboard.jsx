@@ -96,6 +96,37 @@ export default function Dashboard() {
     }
   };
 
+  const [newCoop, setNewCoop] = useState({ name: '', location: '', cropType: '' });
+  const [creating, setCreating] = useState(false);
+
+  const handleCreateCoop = async (e) => {
+    e.preventDefault();
+    if (!newCoop.name) return showToast('Le nom est obligatoire');
+    setCreating(true);
+    try {
+      const res = await client.post('/cooperatives', newCoop);
+      setNewCoop({ name: '', location: '', cropType: '' });
+      setShowNewForm(false);
+      
+      // Rafraîchir les données d'authentification pour obtenir la nouvelle liste de coops
+      if (typeof refreshAuth === 'function') {
+        await refreshAuth();
+        // Sélectionner la nouvelle coopérative automatiquement
+        if (typeof switchCoop === 'function') {
+          switchCoop(res.data);
+        }
+      } else {
+        // Fallback si refreshAuth n'est pas dispo
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+      showToast?.('Erreur lors de la création de la coopérative');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   if (!currentCoop) {
     const mainPending = pendingCoops.length > 0 ? pendingCoops[0] : null;
 
@@ -143,35 +174,53 @@ export default function Dashboard() {
             </div>
           </motion.div>
         ) : (
-          // CAS 1 : Aucune coopérative du tout
-          <>
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-24 h-24 bg-green-100 rounded-[32px] flex items-center justify-center text-green-600 shadow-xl shadow-green-900/5 border border-white"
-            >
-              <Plus size={48} className="animate-pulse" />
-            </motion.div>
-            <div className="text-center max-w-md px-6">
-              <h2 className="font-display font-bold text-slate-800 text-3xl mb-4">Initialisation requise</h2>
-              <p className="text-slate-500 text-base mb-10 leading-relaxed">
-                Pour accéder aux services d'AgriLogix, vous devez faire partie d'une coopérative.
-              </p>
-              <div className="flex flex-col gap-4">
-                <Link to="/ajout-cooperative" className="btn-primary justify-center py-4 text-lg rounded-2xl shadow-xl shadow-green-600/20">
-                   Créer ma propre coopérative
-                </Link>
-                <div className="flex items-center gap-4 my-2">
-                  <div className="h-px bg-slate-200 flex-1" />
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">OU</span>
-                  <div className="h-px bg-slate-200 flex-1" />
-                </div>
-                <button className="btn-outline justify-center py-4 rounded-2xl border-slate-200 text-slate-600" onClick={() => showToast('Recherche de coopératives bientôt disponible')}>
-                   Rejoindre une coop par ID
-                </button>
-              </div>
+          // CAS 1 : Aucune coopérative du tout -> FORMULAIRE DIRECT
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-[40px] shadow-2xl shadow-green-900/10 border border-slate-100 p-10 max-w-lg w-full"
+          >
+            <div className="text-center mb-8">
+              <h2 className="font-display font-bold text-slate-800 text-3xl mb-3">Fonder ma coopérative</h2>
+              <p className="text-slate-500 text-sm">Créez votre espace de gestion en quelques secondes.</p>
             </div>
-          </>
+
+            <form onSubmit={handleCreateCoop} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Nom de la coopérative</label>
+                <input 
+                  type="text" required className="input w-full py-4 rounded-2xl bg-slate-50 border-transparent focus:bg-white focus:border-green-500"
+                  placeholder="ex: Coopérative des maraîchers de Kara"
+                  value={newCoop.name} onChange={e => setNewCoop({...newCoop, name: e.target.value})}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Localisation</label>
+                  <input 
+                    type="text" className="input w-full py-4 rounded-2xl bg-slate-50 border-transparent"
+                    placeholder="ex: Kara, Togo"
+                    value={newCoop.location} onChange={e => setNewCoop({...newCoop, location: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Culture</label>
+                  <input 
+                    type="text" className="input w-full py-4 rounded-2xl bg-slate-50 border-transparent"
+                    placeholder="ex: Maïs, Soja"
+                    value={newCoop.cropType} onChange={e => setNewCoop({...newCoop, cropType: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" disabled={creating}
+                className="btn-primary w-full justify-center py-5 text-lg rounded-2xl shadow-xl shadow-green-600/30 font-bold mt-4"
+              >
+                {creating ? 'Création...' : 'Lancer ma coopérative'}
+              </button>
+            </form>
+          </motion.div>
         )}
       </div>
     );
@@ -196,13 +245,22 @@ export default function Dashboard() {
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            className="input text-xs py-2 min-w-[180px] bg-white shadow-sm cursor-pointer"
-            value={currentCoop._id}
-            onChange={(e) => setCurrentCoop(coops.find((c) => c._id === e.target.value))}
-          >
-            {coops.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
-          </select>
+          <div className="flex items-center bg-white rounded-2xl border border-slate-100 shadow-sm pr-1">
+            <select
+              className="input border-none text-xs py-2 min-w-[180px] bg-transparent cursor-pointer focus:ring-0"
+              value={currentCoop._id}
+              onChange={(e) => setCurrentCoop(coops.find((c) => c._id === e.target.value))}
+            >
+              {coops.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
+            </select>
+            <Link 
+              to="/ajout-cooperative" 
+              className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all mr-1"
+              title="Créer une autre coopérative"
+            >
+              <Plus size={16} />
+            </Link>
+          </div>
           <button className="p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-green-600 transition-all shadow-sm">
             <Bell size={18} />
           </button>

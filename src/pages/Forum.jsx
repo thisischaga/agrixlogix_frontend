@@ -44,6 +44,7 @@ export default function Forum() {
   const [reply, setReply] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [membersCount, setMembersCount] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(1);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const activeThreadIdRef = useRef(null);
@@ -131,6 +132,9 @@ export default function Forum() {
     socket.on('new_thread', onThreadEvt);
     socket.on('thread_updated', onThreadEvt);
     socket.on('new_post', onPost);
+    socket.on('online_update', (count) => {
+      if (count) setOnlineCount(count);
+    });
 
     if (socket.connected) syncRooms();
 
@@ -233,12 +237,12 @@ export default function Forum() {
           </div>
         </div>
         <div className="card flex items-center gap-3 py-4">
-          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-            <MessageSquare size={16} className="text-amber-600" />
+          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
+            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
           </div>
           <div>
-            <p className="font-display font-bold text-slate-800 text-xl leading-none">{totalPosts}</p>
-            <p className="text-[11px] text-slate-400 font-semibold mt-1">Messages (fil)</p>
+            <p className="font-display font-bold text-slate-800 text-xl leading-none">{onlineCount}</p>
+            <p className="text-[11px] text-slate-400 font-semibold mt-1">En ligne</p>
           </div>
         </div>
       </div>
@@ -315,7 +319,9 @@ export default function Forum() {
                   <Hash size={20} className="text-green-600 shrink-0 mt-0.5" />
                   <span>{activeThread.title}</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-2">{activeThread.authorName} · sujet créé depuis l’API</p>
+                <p className="text-xs text-slate-400 mt-2">
+                  Lancé par <span className="font-bold text-slate-600">{activeThread.authorName}</span> • {new Date(activeThread.createdAt).toLocaleDateString('fr-FR')}
+                </p>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[45vh] sm:max-h-[50vh]">
@@ -324,12 +330,26 @@ export default function Forum() {
                     {activeThread.content}
                   </div>
                 ) : null}
-                {posts.map((p) => (
-                  <div key={p._id} className="border-l-4 border-green-200 pl-3 py-2">
-                    <p className="text-xs font-bold text-slate-500">{p.authorName ?? '—'}</p>
-                    <p className="text-sm text-slate-700 mt-1 whitespace-pre-wrap">{p.content}</p>
-                  </div>
-                ))}
+                {posts.map((p) => {
+                  const isMe = String(p.authorId) === String(user?._id);
+                  return (
+                    <div key={p._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                      {!isMe && <p className="text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">{p.authorName}</p>}
+                      <div 
+                        className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
+                          isMe 
+                            ? 'bg-green-600 text-white rounded-tr-none' 
+                            : 'bg-slate-100 text-slate-700 rounded-tl-none border border-slate-200'
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap">{p.content}</p>
+                        <p className={`text-[9px] mt-1 text-right opacity-60 ${isMe ? 'text-white' : 'text-slate-400'}`}>
+                          {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
                 <div ref={messagesEndRef} />
               </div>
 
