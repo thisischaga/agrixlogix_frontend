@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useOutletContext, Link } from 'react-router-dom';
+import { useOutletContext, Link, useSearchParams } from 'react-router-dom';
 import {
   Wallet, TrendingUp, TrendingDown, Users, RefreshCw,
   Plus, Bell, Shield, ArrowUpRight, ClipboardList, Activity
@@ -15,10 +15,15 @@ import { mapTransaction } from '../utils/apiMappings';
 import RevenueChart from '../components/charts/RevenueChart';
 import QuickActions from '../components/cards/QuickActions';
 import AuditCard from '../components/cards/AuditCard';
+import ContributionModal from '../components/modals/ContributionModal';
+import TransferModal from '../components/modals/TransferModal';
+import { confirmFedaPayContribution } from '../api/paymentApi';
+
+const FEDAPAY_SESSION_KEY = 'fedapay_pending';
 
 export default function Dashboard() {
   const { showToast } = useOutletContext();
-  const { user, currentCoop, coops, setCurrentCoop, pendingCoops, loadCoops } = useAuth();
+  const { user, currentCoop, coops, setCurrentCoop, pendingCoops, loadCoops, addNotification } = useAuth();
 
   const [stats, setStats] = useState(null);
   const [weekChart, setWeekChart] = useState([]);
@@ -28,6 +33,10 @@ export default function Dashboard() {
   const [socketConnected, setSocketConnected] = useState(false);
   const [newCoop, setNewCoop] = useState({ name: '', location: '', cropType: '' });
   const [creating, setCreating] = useState(false);
+  
+  const [isContributionOpen, setIsContributionOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchData = useCallback(async () => {
     if (!currentCoop?._id) return;
@@ -56,6 +65,51 @@ export default function Dashboard() {
     fetchData();
   }, [fetchData]);
 
+  // ── Confirmation automatique après retour FedaPay ───────────────
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus !== 'success' || !currentCoop?._id) return;
+
+    const pending = sessionStorage.getItem(FEDAPAY_SESSION_KEY);
+    if (!pending) return;
+
+    let parsed;
+    try { parsed = JSON.parse(pending); } catch (_) {
+      sessionStorage.removeItem(FEDAPAY_SESSION_KEY);
+      return;
+    }
+
+    const { transaction_id, amount, coopId, description } = parsed;
+    if (!transaction_id || coopId !== currentCoop._id) return;
+
+    // Nettoyer sessionStorage + URL dès maintenant
+    sessionStorage.removeItem(FEDAPAY_SESSION_KEY);
+    setSearchParams({}, { replace: true });
+
+    (async () => {
+      try {
+        await confirmFedaPayContribution({
+          fedapayTransactionId: transaction_id,
+          cooperativeId: coopId,
+          amount,
+          description,
+        });
+        showToast?.('✅ Cotisation FedaPay confirmée et enregistrée !');
+        fetchData();
+      } catch (err) {
+        const msg = err.response?.data?.error || err.message;
+        // Statut « pas encore approuvé » = normal (délai réseau FedaPay)
+        if (err.response?.status === 402) {
+          showToast?.(`⏳ Paiement en attente de validation FedaPay (${msg})`);
+        } else {
+          showToast?.(`Erreur confirmation FedaPay : ${msg}`);
+        }
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, currentCoop?._id]);
+  // ─────────────────────────────────────────────────────────────────
+
   // Real-time updates with Socket.io
   useEffect(() => {
     if (!currentCoop?._id || !user?._id) return;
@@ -76,13 +130,59 @@ export default function Dashboard() {
       setStats((prev) => prev ? { ...prev, ...payload } : prev);
       if (payload.newTransaction) {
         setTransactions(prev => [mapTransaction(payload.newTransaction), ...prev.slice(0, 9)]);
+        addNotification({
+          title: payload.message ? 'Paiement Reçu' : 'Nouvelle transaction',
+          message: payload.message || `${payload.newTransaction.title}: ${payload.newTransaction.amount} FCFA`,
+          type: payload.newTransaction.type === 'in' ? 'success' : 'warning'
+        });
       }
     });
 
-    return () => socket.disconnect();
+    socket.on('vote_update', (payload) => {
+      // payload est le document Vote
+      addNotification({
+        title: 'Nouveau Vote',
+        message: `Une proposition a été créée : ${payload.title}`,
+        type: 'info'
+      });
+    });
+
+    socket.on('new_thread', (payload) => {
+      addNotification({
+        title: 'Forum',
+        message: `Nouveau sujet de ${payload.authorName} : ${payload.title}`,
+        type: 'info'
+      });
+    });
+
+    socket.on('thread_updated', (payload) => {
+      addNotification({
+        title: 'Forum (Réponse)',
+        message: `Nouveau message dans : ${payload.title}`,
+        type: 'info'
+      });
+    });
+
+    socket.on('membership_request', (payload) => {
+      addNotification({
+        title: 'Demande d\'adhésion',
+        message: `${payload.userName} souhaite rejoindre votre coopérative.`,
+        type: 'info'
+      });
+    });
+
+    return () => {
+      socket.off('stats_update');
+      socket.off('vote_update');
+      socket.off('new_thread');
+      socket.off('thread_updated');
+      socket.off('membership_request');
+      socket.disconnect();
+    };
   }, [currentCoop?._id, user?._id]);
 
   const balance = stats?.balance ?? 0;
+  const userBalance = stats?.userBalance ?? 0;
   const growth = Number(stats?.growthRate ?? 0);
   const membersCount = stats?.membersCount ?? 0;
   const activeVotes = stats?.activeVotes ?? 0;
@@ -361,7 +461,10 @@ export default function Dashboard() {
           <RevenueChart weekData={weekChart} monthData={monthChart} />
         </div>
         <div className="xl:col-span-4">
-          <QuickActions />
+          <QuickActions 
+            onContribute={() => setIsContributionOpen(true)} 
+            onTransfer={() => setIsTransferOpen(true)} 
+          />
         </div>
       </div>
 
@@ -416,6 +519,23 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
+
+      {/* Modals */}
+      <ContributionModal 
+        isOpen={isContributionOpen} 
+        onClose={() => setIsContributionOpen(false)} 
+        coopId={currentCoop._id} 
+        user={user} 
+        onSuccess={fetchData} 
+      />
+      <TransferModal 
+        isOpen={isTransferOpen} 
+        onClose={() => setIsTransferOpen(false)} 
+        coopId={currentCoop._id} 
+        user={user} 
+        userBalance={userBalance}
+        onSuccess={fetchData} 
+      />
     </div>
   );
 }

@@ -7,10 +7,12 @@ import Votes        from '../pages/Votes';
 import Forum        from '../pages/Forum';
 import Membres      from '../pages/Membres';
 import Settings     from '../pages/Settings';
+import Blockchain   from '../pages/Blockchain';
 import NotFound     from '../pages/NotFound';
 import AjoutCooperative from '../pages/AjoutCooperative';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Comptabilite from '../pages/Comptabilite';
 
 export default function AppRoutes() {
   return (
@@ -27,6 +29,8 @@ export default function AppRoutes() {
           <Route path="votes"        element={<Votes />} />
           <Route path="forum"        element={<Forum />} />
           <Route path="membres"      element={<Membres />} />
+          <Route path="blockchain"   element={<Blockchain />} />
+          <Route path="comptabilite" element={<Comptabilite />} />
           <Route path="settings"     element={<Settings />} />
           <Route path="ajout-cooperative" element={<AjoutCooperative />} />
         </Route>

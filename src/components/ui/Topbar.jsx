@@ -1,14 +1,17 @@
-// src/components/ui/Topbar.jsx
 import { Bell, Menu, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
 import BrandLogo from '../brand/BrandLogo';
+import NotificationPanel from '../modals/NotificationPanel';
 
 /**
  * Barre supérieure (style tableau de bord coop : accueil, réseau, profil).
  */
 export default function Topbar({ title, subtitle, onMenuClick }) {
-  const { user, currentCoop } = useAuth();
+  const { user, currentCoop, notifications } = useAuth();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-7 py-3 lg:py-4 shadow-sm/50">
@@ -59,11 +62,19 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
 
           <button
             type="button"
-            className="h-9 w-9 shrink-0 rounded-full border border-slate-100 bg-slate-50 flex items-center justify-center text-slate-500 hover:text-green-600 hover:bg-green-50 hover:border-green-100 transition-all duration-200"
+            onClick={() => setNotifOpen(true)}
+            className="h-9 w-9 shrink-0 rounded-full border border-slate-100 bg-slate-50 flex items-center justify-center text-slate-500 hover:text-green-600 hover:bg-green-50 hover:border-green-100 transition-all duration-200 relative"
             aria-label="Notifications"
           >
             <Bell size={16} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded-full border-2 border-white px-0.5">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
+          
+          <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
           <button
             type="button"
             className="hidden sm:flex h-9 w-9 shrink-0 rounded-full border border-slate-100 bg-slate-50 items-center justify-center text-slate-500 hover:text-green-600 hover:bg-green-50 hover:border-green-100 transition-all duration-200"

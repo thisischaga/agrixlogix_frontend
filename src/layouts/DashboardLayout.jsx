@@ -13,6 +13,7 @@ const pageMeta = {
   '/votes': { title: 'Gouvernance & Vote', subtitle: 'Participez aux décisions de la coopérative' },
   '/forum': { title: 'Forum Coopérative', subtitle: 'Espace de discussion entre membres' },
   '/membres': { title: 'Membres', subtitle: 'Membres de la coopérative' },
+  '/comptabilite': { title: 'Comptabilité', subtitle: 'Gestion financière, journal et bilan' },
   '/settings': { title: 'Paramètres', subtitle: 'Préférences et compte' },
   '/ajout-cooperative': { title: 'Nouvelle coopérative', subtitle: 'Créer ou compléter l’adhésion' },
 };
@@ -38,7 +39,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-green-50">
+    <div className="flex min-h-screen bg-green-50 no-scrollbar">
       <button
         type="button"
         aria-label={sidebarOpen ? 'Fermer le menu' : 'Fond pour fermer le menu'}

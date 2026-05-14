@@ -1,7 +1,7 @@
 // src/components/ui/Sidebar.jsx
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, ArrowLeftRight, Vote, Users, Settings, MessageSquare,
+  LayoutDashboard, ArrowLeftRight, Vote, Users, Settings, MessageSquare, BookOpen,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/votes', label: 'Vote', icon: Vote },
   { to: '/forum', label: 'Forum', icon: MessageSquare },
   { to: '/membres', label: 'Membres', icon: Users },
+  { to: '/comptabilite', label: 'Comptabilité', icon: BookOpen },
   { to: '/settings', label: 'Paramètres', icon: Settings },
 ];
 

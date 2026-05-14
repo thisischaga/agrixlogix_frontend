@@ -20,7 +20,14 @@
     font-family: 'Space Grotesk', sans-serif;
   }
 }
+.no-scrollbar ::-webkit-scrollbar{
+  display: none;
+}
+.no-scrollbar{
+  -ms-overflow-style: none;
 
+  scrollbar-width: none;
+}
 @layer components {
   /* Scrollbar */
   ::-webkit-scrollbar { width: 6px; height: 6px; }

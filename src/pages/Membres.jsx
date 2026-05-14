@@ -99,7 +99,8 @@ export default function Membres() {
         setCheckResult('multiple');
       } else {
         const inviteRes = await client.post(`/cooperatives/${currentCoop._id}/invite-link`);
-        setInviteUrl(inviteRes.data?.webJoinUrl || '');
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://agrilogix.vercel.app';
+        setInviteUrl(inviteRes.data?.invitePath ? `${baseUrl}${inviteRes.data.invitePath}` : inviteRes.data?.webJoinUrl || '');
         setCheckResult('not_found');
       }
     } catch (err) {

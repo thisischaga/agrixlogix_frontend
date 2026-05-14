@@ -12,6 +12,20 @@ export const AuthProvider = ({ children }) => {
   const [pendingCoops, setPendingCoops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [unreadForumCount, setUnreadForumCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = useCallback((notif) => {
+    setNotifications(prev => [{
+      id: Date.now(),
+      date: new Date(),
+      read: false,
+      ...notif
+    }, ...prev].slice(0, 20));
+  }, []);
+
+  const markAllRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, []);
 
   const loadCoops = useCallback(async () => {
     try {
@@ -121,7 +135,8 @@ export const AuthProvider = ({ children }) => {
       value={{ 
         user, coops, pendingCoops, currentCoop, setCurrentCoop, 
         loading, login, register, logout, loadCoops,
-        unreadForumCount, setUnreadForumCount
+        unreadForumCount, setUnreadForumCount,
+        notifications, addNotification, markAllRead
       }}
     >
       {children}
