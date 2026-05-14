@@ -22,7 +22,8 @@ const FEDAPAY_SESSION_KEY = 'fedapay_pending';
 
 export default function Dashboard() {
   const { showToast } = useOutletContext();
-  const { user, currentCoop, coops, setCurrentCoop, pendingCoops, loadCoops, addNotification } = useAuth();
+  const { user, currentCoop, coops, setCurrentCoop, pendingCoops, loadCoops, addNotification, socket } = useAuth();
+
 
   const [stats, setStats] = useState(null);
   const [weekChart, setWeekChart] = useState([]);

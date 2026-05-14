@@ -191,6 +191,7 @@ export const AuthProvider = ({ children }) => {
         currentCoop, 
         loading,
         login,
+        register,
         logout,
         setCurrentCoop,
         refreshCoops: loadCoops,
@@ -200,6 +201,7 @@ export const AuthProvider = ({ children }) => {
         unreadForumCount,
         setUnreadForumCount,
         notifications
+
       }}
     >
       {children}
