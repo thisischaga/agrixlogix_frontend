@@ -25,6 +25,7 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index               element={<Dashboard />} />
+          <Route path="dashboard"   element={<Dashboard />} />
           <Route path="transactions" element={<Transactions />} />
           <Route path="votes"        element={<Votes />} />
           <Route path="forum"        element={<Forum />} />
