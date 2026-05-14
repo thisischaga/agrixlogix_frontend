@@ -366,30 +366,58 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
+        {/* Personal Balance Card */}
+        <motion.div
+          whileHover={{ y: -4 }}
+          className="card bg-gradient-to-br from-blue-600 to-indigo-700 border-none shadow-xl shadow-blue-900/20 p-6 relative overflow-hidden"
+        >
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.1em] mb-1">Mon Épargne / Solde</p>
+              <h3 className="font-display text-3xl font-bold text-white">
+                {loading ? '—' : formatCurrency(userBalance)}
+              </h3>
+            </div>
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white">
+              <Shield size={24} />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-blue-100 font-medium">Votre contribution totale</span>
+          </div>
+          <div className="absolute -right-4 -bottom-4 opacity-[0.1] text-white">
+            <TrendingUp size={120} />
+          </div>
+        </motion.div>
+
         {/* Members & Votes */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="card bg-blue-50/50 border-blue-100 flex flex-col justify-between p-5">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+          <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
+            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
               <Users size={20} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Membres</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membres</p>
               <p className="font-display text-2xl font-bold text-slate-800">{membersCount}</p>
             </div>
           </div>
-          <div className="card bg-amber-50/50 border-amber-100 flex flex-col justify-between p-5">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shadow-sm">
+          <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
+            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
               <ClipboardList size={20} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">Votes Actifs</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Votes Actifs</p>
               <p className="font-display text-2xl font-bold text-slate-800">{activeVotes}</p>
             </div>
           </div>
         </div>
 
-        {/* Audit Card */}
-        <div className="lg:col-span-1">
+
+      </div>
+
+      {/* Audit & Charts Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
+        <div className="xl:col-span-4">
           <AuditCard
             dernierBloc={stats?.blockchain?.lastBlock ?? '—'}
             validateursLibelle={stats?.blockchain?.validators ?? '—'}
@@ -401,20 +429,18 @@ export default function Dashboard() {
             onAction={(msg) => showToast?.(msg)}
           />
         </div>
-      </div>
-
-      {/* Charts & Actions Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
         <div className="xl:col-span-8">
-          <RevenueChart weekData={weekChart} monthData={monthChart} />
-        </div>
-        <div className="xl:col-span-4">
           <QuickActions 
             onContribute={() => setIsContributionOpen(true)} 
             onTransfer={() => setIsTransferOpen(true)} 
           />
         </div>
       </div>
+
+      <div className="grid grid-cols-1 gap-6">
+        <RevenueChart weekData={weekChart} monthData={monthChart} />
+      </div>
+
 
       {/* Recent Transactions Table */}
       <div className="card bg-white shadow-sm border-slate-100">
