@@ -35,32 +35,19 @@ export default function ContributionModal({ isOpen, onClose, coopId, user, onSuc
         ? `Cotisation – ${note.trim()} (${user?.name || 'Membre'})`
         : `Cotisation de ${user?.name || 'Membre'}`;
 
-      if (method === 'redirect') {
-        const paymentData = await createFedaPayPayment({ amount: amt, description, cooperativeId: coopId });
-        if (!paymentData.payment_url) throw new Error('URL de paiement non reçue');
-        
-        sessionStorage.setItem(FEDAPAY_SESSION_KEY, JSON.stringify({
-          transaction_id: paymentData.transaction_id,
-          amount: amt,
-          coopId,
-          description,
-        }));
+      // Les deux méthodes passent par la page FedaPay (checkout sécurisé)
+      const paymentData = await createFedaPayPayment({ amount: amt, description, cooperativeId: coopId });
+      if (!paymentData.payment_url) throw new Error('URL de paiement non reçue');
+      
+      sessionStorage.setItem(FEDAPAY_SESSION_KEY, JSON.stringify({
+        transaction_id: paymentData.transaction_id,
+        amount: amt,
+        coopId,
+        description,
+      }));
 
-        toast.loading('Redirection vers FedaPay…');
-        window.location.href = paymentData.payment_url;
-      } else {
-        // Paiement direct
-        await createFedaPayDirectPayment({ 
-          amount: amt, 
-          description, 
-          cooperativeId: coopId,
-          phoneNumber: phone,
-          mode: operator
-        });
-        
-        toast.success('Paiement initié ! Veuillez confirmer sur votre téléphone.');
-        setStep('success');
-      }
+      toast.loading('Redirection vers FedaPay…');
+      window.location.href = paymentData.payment_url;
     } catch (err) {
       const msg = err.response?.data?.error || err.message;
       toast.error(`Erreur : ${msg}`);
