@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import client from '../api/client';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { io } from 'socket.io-client';
+import client, { getSocketOrigin } from '../api/client';
+
 
 const AuthContext = createContext();
 
@@ -13,6 +15,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [unreadForumCount, setUnreadForumCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
+  const socketRef = useRef(null);
+
 
   const addNotification = useCallback((notif) => {
     setNotifications(prev => [{
@@ -77,6 +81,54 @@ export const AuthProvider = ({ children }) => {
     }
   }, [currentCoop?._id, loadForumStats]);
 
+  // ── Gestion globale du Socket ───────────────────────────────────
+  useEffect(() => {
+    if (!user?._id) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      return;
+    }
+
+    if (!socketRef.current) {
+      const socket = io(getSocketOrigin(), {
+        auth: { userId: user._id },
+        transports: ['websocket', 'polling']
+      });
+
+      socket.on('connect', () => {
+        console.log('Global socket connected');
+        if (currentCoop?._id) {
+          socket.emit('join_coop', currentCoop._id);
+        }
+      });
+
+      socket.on('stats_update', (payload) => {
+        if (payload.message) {
+          addNotification({
+            title: 'Mise à jour Coop',
+            message: payload.message,
+            type: payload.type || 'info'
+          });
+        }
+      });
+
+      socketRef.current = socket;
+    } else {
+      // Si la coop change, on rejoint la nouvelle salle
+      if (currentCoop?._id) {
+        socketRef.current.emit('join_coop', currentCoop._id);
+      }
+    }
+
+    return () => {
+      // On ne déconnecte pas ici pour éviter les reconnexions inutiles
+      // mais on pourrait nettoyer les listeners si besoin.
+    };
+  }, [user?._id, currentCoop?._id, addNotification]);
+
+
   // Restore session on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('agrix_user');
@@ -133,10 +185,21 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider
       value={{ 
-        user, coops, pendingCoops, currentCoop, setCurrentCoop, 
-        loading, login, register, logout, loadCoops,
-        unreadForumCount, setUnreadForumCount,
-        notifications, addNotification, markAllRead
+        user, 
+        coops, 
+        pendingCoops, 
+        currentCoop, 
+        loading,
+        login,
+        logout,
+        setCurrentCoop,
+        refreshCoops: loadCoops,
+        addNotification,
+        markAllRead,
+        socket: socketRef.current,
+        unreadForumCount,
+        setUnreadForumCount,
+        notifications
       }}
     >
       {children}

@@ -4,11 +4,10 @@ import {
   Wallet, TrendingUp, TrendingDown, Users, RefreshCw,
   Plus, Bell, Shield, ArrowUpRight, ClipboardList, Activity
 } from 'lucide-react';
-import { io } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { useAuth } from '../context/AuthContext';
-import client, { getSocketOrigin } from '../api/client';
+import client from '../api/client';
 import { formatCurrency, formatDateShort } from '../utils/formatCurrency';
 import { mapTransaction } from '../utils/apiMappings';
 
@@ -110,76 +109,24 @@ export default function Dashboard() {
   }, [searchParams, currentCoop?._id]);
   // ─────────────────────────────────────────────────────────────────
 
-  // Real-time updates with Socket.io
+  // ── Real-time updates with Global Socket ───────────────────────
   useEffect(() => {
-    if (!currentCoop?._id || !user?._id) return;
+    if (!socket || !currentCoop?._id) return;
 
-    const socket = io(getSocketOrigin(), {
-      transports: ['websocket'],
-      auth: { userId: user._id }
-    });
-
-    socket.on('connect', () => {
-      setSocketConnected(true);
-      socket.emit('join_coop', currentCoop._id);
-    });
-
-    socket.on('disconnect', () => setSocketConnected(false));
-
-    socket.on('stats_update', (payload) => {
+    const handleStatsUpdate = (payload) => {
       setStats((prev) => prev ? { ...prev, ...payload } : prev);
       if (payload.newTransaction) {
         setTransactions(prev => [mapTransaction(payload.newTransaction), ...prev.slice(0, 9)]);
-        addNotification({
-          title: payload.message ? 'Paiement Reçu' : 'Nouvelle transaction',
-          message: payload.message || `${payload.newTransaction.title}: ${payload.newTransaction.amount} FCFA`,
-          type: payload.newTransaction.type === 'in' ? 'success' : 'warning'
-        });
       }
-    });
+    };
 
-    socket.on('vote_update', (payload) => {
-      // payload est le document Vote
-      addNotification({
-        title: 'Nouveau Vote',
-        message: `Une proposition a été créée : ${payload.title}`,
-        type: 'info'
-      });
-    });
-
-    socket.on('new_thread', (payload) => {
-      addNotification({
-        title: 'Forum',
-        message: `Nouveau sujet de ${payload.authorName} : ${payload.title}`,
-        type: 'info'
-      });
-    });
-
-    socket.on('thread_updated', (payload) => {
-      addNotification({
-        title: 'Forum (Réponse)',
-        message: `Nouveau message dans : ${payload.title}`,
-        type: 'info'
-      });
-    });
-
-    socket.on('membership_request', (payload) => {
-      addNotification({
-        title: 'Demande d\'adhésion',
-        message: `${payload.userName} souhaite rejoindre votre coopérative.`,
-        type: 'info'
-      });
-    });
+    socket.on('stats_update', handleStatsUpdate);
 
     return () => {
-      socket.off('stats_update');
-      socket.off('vote_update');
-      socket.off('new_thread');
-      socket.off('thread_updated');
-      socket.off('membership_request');
-      socket.disconnect();
+      socket.off('stats_update', handleStatsUpdate);
     };
-  }, [currentCoop?._id, user?._id]);
+  }, [socket, currentCoop?._id]);
+
 
   const balance = stats?.balance ?? 0;
   const userBalance = stats?.userBalance ?? 0;

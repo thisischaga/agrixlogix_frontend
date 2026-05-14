@@ -49,6 +49,23 @@ export default function Transactions() {
     loadTransactions();
   }, [loadTransactions]);
 
+  const { socket } = useAuth();
+  useEffect(() => {
+    if (!socket || !currentCoop?._id) return;
+
+    const handleNewTx = (payload) => {
+      if (payload.newTransaction) {
+        setTransactions(prev => [mapTransaction(payload.newTransaction), ...prev]);
+      }
+    };
+
+    socket.on('stats_update', handleNewTx);
+    return () => {
+      socket.off('stats_update', handleNewTx);
+    };
+  }, [socket, currentCoop?._id]);
+
+
   const filtered = useMemo(() => {
     return transactions.filter((tx) => {
       const query = search.toLowerCase();
