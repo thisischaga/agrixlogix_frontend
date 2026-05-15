@@ -156,8 +156,8 @@ export default function Transactions() {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="card">
+    <div className="flex flex-col gap-4 sm:gap-5 w-full max-w-full overflow-x-hidden">
+      <div className="card !p-3 sm:!p-5">
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[280px] sm:min-w-[300px]">

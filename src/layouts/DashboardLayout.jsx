@@ -60,7 +60,7 @@ export default function DashboardLayout() {
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="flex-1 px-4 py-5 sm:px-6 lg:px-7 lg:py-7 max-w-[1600px] w-full mx-auto">
+        <main className="flex-1 px-2.5 py-4 sm:px-6 lg:px-8 lg:py-7 max-w-[1920px] w-full mx-auto">
           <Outlet context={{ showToast }} />
         </main>
       </div>

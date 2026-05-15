@@ -14,7 +14,7 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-4 sm:px-6 lg:px-7 py-3 lg:py-4 shadow-sm/50">
+    <header className="sticky top-0 z-30 bg-white border-b border-slate-100 px-2.5 sm:px-6 lg:px-8 py-3 lg:py-4 shadow-sm/50">
       <div className="flex flex-wrap items-start gap-3 sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
           <button

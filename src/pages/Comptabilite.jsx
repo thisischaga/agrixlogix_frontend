@@ -314,7 +314,7 @@ export default function Comptabilite() {
             </div>
           </div>
 
-          <div className="card flex flex-col">
+          <div className="card !p-3 sm:!p-6 w-full overflow-hidden">
             <h2 className="font-display font-bold text-slate-800 mb-4 flex items-center gap-2">
               <BarChart3 size={18} className="text-violet-600" /> Camembert catégories
             </h2>
