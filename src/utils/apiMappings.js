@@ -7,7 +7,9 @@ export function mapTransaction(tx) {
     rawType === 'in' ||
     rawType === 'credit' ||
     rawType === 'entrée' ||
-    rawType === 'entree';
+    rawType === 'entree' ||
+    rawType === 'cotisation' ||
+    rawType === 'deposit';
 
   const hash = tx.txHash ?? tx.hash;
 

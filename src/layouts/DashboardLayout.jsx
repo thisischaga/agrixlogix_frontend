@@ -22,6 +22,9 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { user, currentCoop, loading } = useAuth();
   
+  const { toast, showToast } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // Restriction : Si pas de coop et pas sur Dashboard/Settings/AjoutCoop, on redirige vers AjoutCoop
   const isPublicPage = ['/', '/settings', '/ajout-cooperative'].includes(location.pathname);
   if (!loading && !currentCoop?._id && !isPublicPage) {
@@ -35,8 +38,6 @@ export default function DashboardLayout() {
       ? `Bon retour, ${firstName}`
       : metaBase.subtitle;
   const meta = { ...metaBase, subtitle };
-  const { toast, showToast } = useToast();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-green-50 no-scrollbar">

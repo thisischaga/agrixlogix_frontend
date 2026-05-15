@@ -68,46 +68,71 @@ export default function Dashboard() {
   // ── Confirmation automatique après retour FedaPay ───────────────
   useEffect(() => {
     const paymentStatus = searchParams.get('payment');
-    if (paymentStatus !== 'success' || !currentCoop?._id) return;
+    if (paymentStatus !== 'success') return;
+    
+    console.log('[FedaPay Debug] Retour de paiement détecté. CoopID:', currentCoop?._id, 'Loading:', loading);
+    
+    if (!currentCoop?._id || loading) return;
 
-    const pending = sessionStorage.getItem(FEDAPAY_SESSION_KEY);
-    if (!pending) return;
+    const pending = localStorage.getItem(FEDAPAY_SESSION_KEY);
+    console.log('[FedaPay Debug] Données en localStorage:', pending);
+
+    if (!pending) {
+      console.warn('[FedaPay Debug] Aucune donnée de session trouvée !');
+      return;
+    }
 
     let parsed;
-    try { parsed = JSON.parse(pending); } catch (_) {
-      sessionStorage.removeItem(FEDAPAY_SESSION_KEY);
+    try { parsed = JSON.parse(pending); } catch (e) {
+      console.error('[FedaPay Debug] Erreur parsing session:', e);
+      localStorage.removeItem(FEDAPAY_SESSION_KEY);
       return;
     }
 
     const { transaction_id, amount, coopId, description } = parsed;
-    if (!transaction_id || coopId !== currentCoop._id) return;
+    console.log('[FedaPay Debug] Détails:', { transaction_id, coopId, amount });
 
-    // Nettoyer sessionStorage + URL dès maintenant
-    sessionStorage.removeItem(FEDAPAY_SESSION_KEY);
+    if (!transaction_id) {
+      showToast?.('ID de transaction manquant dans la session', 'error');
+      return;
+    }
+
+    if (coopId !== currentCoop._id) {
+      console.warn('[FedaPay Debug] CoopID ne correspond pas:', { session: coopId, current: currentCoop._id });
+      return;
+    }
+
+    // Nettoyage
+    localStorage.removeItem(FEDAPAY_SESSION_KEY);
     setSearchParams({}, { replace: true });
 
-    (async () => {
+    const performConfirmation = async () => {
+      showToast?.('⌛ Confirmation de votre cotisation en cours...');
       try {
+        console.log('[FedaPay Debug] Appel API confirmation...');
         await confirmFedaPayContribution({
           fedapayTransactionId: transaction_id,
           cooperativeId: coopId,
           amount,
           description,
         });
-        showToast?.('✅ Cotisation FedaPay confirmée et enregistrée !');
-        fetchData();
+        showToast?.('✅ Cotisation enregistrée avec succès !');
+        setTimeout(() => {
+          fetchData();
+          loadCoops();
+        }, 1000);
       } catch (err) {
+        console.error('[FedaPay Debug] Échec confirmation API:', err);
         const msg = err.response?.data?.error || err.message;
-        // Statut « pas encore approuvé » = normal (délai réseau FedaPay)
-        if (err.response?.status === 402) {
-          showToast?.(`⏳ Paiement en attente de validation FedaPay (${msg})`);
-        } else {
-          showToast?.(`Erreur confirmation FedaPay : ${msg}`);
-        }
+        showToast?.(`Erreur confirmation : ${msg}`, 'error');
       }
-    })();
+    };
+
+    performConfirmation();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, currentCoop?._id]);
+  }, [searchParams, currentCoop?._id, loading]);
+
+
   // ─────────────────────────────────────────────────────────────────
 
   // ── Real-time updates with Global Socket ───────────────────────

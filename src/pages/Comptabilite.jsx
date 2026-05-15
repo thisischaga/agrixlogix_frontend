@@ -192,28 +192,30 @@ export default function Comptabilite() {
 
       {/* ── Mois courant ── */}
       {data && !loading && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'Entrées ce mois', val: data.moisCourant.entrees, color: 'text-green-600', bg: 'bg-green-50' },
             { label: 'Sorties ce mois', val: data.moisCourant.sorties, color: 'text-red-500',   bg: 'bg-red-50' },
             { label: 'Net ce mois',     val: data.moisCourant.solde,   color: data.moisCourant.solde >= 0 ? 'text-violet-600' : 'text-red-600', bg: 'bg-violet-50' },
           ].map(({ label, val, color, bg }) => (
-            <div key={label} className={`${bg} rounded-2xl p-5 flex flex-col gap-1`}>
+            <div key={label} className={`${bg} rounded-2xl p-4 sm:p-5 flex flex-col gap-1 shadow-sm`}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-              <p className={`font-display font-bold text-xl ${color}`}>{fmtShort(val)}</p>
-              <p className="text-[10px] text-slate-400">{fmt(val)}</p>
+              <div className="flex items-baseline gap-2">
+                <p className={`font-display font-bold text-xl ${color}`}>{fmtShort(val)}</p>
+                <p className="text-[10px] text-slate-400 font-medium">{fmt(val)}</p>
+              </div>
             </div>
           ))}
         </div>
       )}
 
       {/* ── Onglets ── */}
-      <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit">
+      <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl w-fit max-w-full overflow-x-auto no-scrollbar">
         {ONGLETS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             onClick={() => setOnglet(id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap ${
               onglet === id ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >

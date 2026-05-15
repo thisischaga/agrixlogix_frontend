@@ -39,7 +39,7 @@ export default function ContributionModal({ isOpen, onClose, coopId, user, onSuc
       const paymentData = await createFedaPayPayment({ amount: amt, description, cooperativeId: coopId });
       if (!paymentData.payment_url) throw new Error('URL de paiement non reçue');
       
-      sessionStorage.setItem(FEDAPAY_SESSION_KEY, JSON.stringify({
+      localStorage.setItem(FEDAPAY_SESSION_KEY, JSON.stringify({
         transaction_id: paymentData.transaction_id,
         amount: amt,
         coopId,

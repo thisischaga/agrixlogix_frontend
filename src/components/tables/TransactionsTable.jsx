@@ -60,20 +60,20 @@ export default function TransactionsTable({ data, onView, userRole, onValidate, 
               </td>
 
               {/* Catégorie */}
-              <td className="px-4 py-3.5">
-                <span className="badge-gray">{tx.categorie}</span>
+              <td className="px-3 sm:px-4 py-3.5">
+                <span className="badge-gray text-[10px] sm:text-xs">{tx.categorie}</span>
               </td>
-
+ 
               {/* Date */}
-              <td className="px-4 py-3.5 text-xs text-slate-500 whitespace-nowrap">
+              <td className="px-3 sm:px-4 py-3.5 text-[10px] sm:text-xs text-slate-500 whitespace-nowrap">
                 {formatDate(tx.date)}
               </td>
-
+ 
               {/* Bloc et Statut */}
-              <td className="px-4 py-3.5">
-                {tx.statut === 'pending' && <span className="badge-warning text-xs font-semibold px-2 py-1 rounded">En attente</span>}
-                {tx.statut === 'rejected' && <span className="badge-danger text-xs font-semibold px-2 py-1 rounded">Rejeté</span>}
-                {tx.statut === 'completed' && <span className="badge-green text-xs font-mono px-2 py-1 rounded">✓ {tx.bloc !== '—' ? tx.bloc : 'validé'}</span>}
+              <td className="px-3 sm:px-4 py-3.5">
+                {tx.statut === 'pending' && <span className="bg-amber-100 text-amber-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-lg">En attente</span>}
+                {tx.statut === 'rejected' && <span className="bg-red-100 text-red-700 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-lg">Rejeté</span>}
+                {tx.statut === 'completed' && <span className="badge-green text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded-lg">✓ {tx.bloc !== '—' ? tx.bloc : 'validé'}</span>}
               </td>
 
               {/* Montant */}

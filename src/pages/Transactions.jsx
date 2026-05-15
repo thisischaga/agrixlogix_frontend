@@ -158,48 +158,57 @@ export default function Transactions() {
   return (
     <div className="flex flex-col gap-5">
       <div className="card">
-        <div className="flex flex-wrap items-center gap-3 mb-5">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              className="input pl-10"
-              placeholder="Rechercher une transaction, hash..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[280px] sm:min-w-[300px]">
+              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                className="input pl-10 h-11"
+                placeholder="Rechercher une transaction, hash..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <button type="button" className="btn-primary flex-1 sm:flex-initial h-11" onClick={() => setShowModal(true)}>
+                <Plus size={14} /> Nouvelle
+              </button>
+              <button type="button" className="btn-outline flex-1 sm:flex-initial h-11" onClick={() => loadTransactions()}>
+                <RefreshCw size={14} /> Actualiser
+              </button>
+            </div>
           </div>
 
-          <div className="relative">
-            <Filter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <select
-              className="input pl-8 pr-4 cursor-pointer appearance-none min-w-[150px]"
-              value={categorie}
-              onChange={(e) => { setCategorie(e.target.value); setPage(1); }}
-            >
-              {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
-            </select>
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-50 mt-2 sm:mt-0 sm:border-none sm:pt-0">
+            <div className="relative flex-1 sm:flex-initial min-w-[140px]">
+              <Filter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select
+                className="input pl-8 pr-4 cursor-pointer appearance-none h-10 text-xs font-semibold"
+                value={categorie}
+                onChange={(e) => { setCategorie(e.target.value); setPage(1); }}
+              >
+                {CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+
+            <div className="relative flex-1 sm:flex-initial min-w-[140px]">
+              <select
+                className="input cursor-pointer appearance-none h-10 text-xs font-semibold"
+                value={type}
+                onChange={(e) => { setType(e.target.value); setPage(1); }}
+              >
+                <option value="Tous">Tous les types</option>
+                <option value="credit">Entrées (Crédit)</option>
+                <option value="debit">Sorties (Débit)</option>
+              </select>
+            </div>
+
+            <button type="button" className="btn-outline h-10 text-xs ml-auto" onClick={handleExport}>
+              <Download size={14} /> CSV
+            </button>
           </div>
-
-          <select
-            className="input cursor-pointer appearance-none min-w-[130px]"
-            value={type}
-            onChange={(e) => { setType(e.target.value); setPage(1); }}
-          >
-            <option value="Tous">Tous les types</option>
-            <option value="credit">Entrées</option>
-            <option value="debit">Sorties</option>
-          </select>
-
-          <button type="button" className="btn-outline" onClick={handleExport}>
-            <Download size={14} /> Exporter CSV
-          </button>
-          <button type="button" className="btn-primary" onClick={() => loadTransactions()}>
-            <RefreshCw size={14} /> Actualiser
-          </button>
-          <button type="button" className="btn-primary" onClick={() => setShowModal(true)}>
-            <Plus size={14} /> Nouvelle transaction
-          </button>
         </div>
 
         <div className="flex items-center justify-between mb-3">
