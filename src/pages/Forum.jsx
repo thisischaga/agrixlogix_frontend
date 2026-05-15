@@ -2,31 +2,55 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import {
-  Search, Plus, MessageSquare, Send, Hash, X, Users,
+  Search, Plus, MessageSquare, Send, Hash, X, Users, ChevronRight, Clock, User
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import client, { getSocketOrigin } from '../api/client';
 
 function ThreadRow({ thread, active, onSelect }) {
   return (
-    <button
+    <motion.button
+      whileHover={{ x: 4 }}
+      whileTap={{ scale: 0.98 }}
       type="button"
       onClick={() => onSelect(thread)}
       className={[
-        'w-full text-left rounded-xl border p-4 transition-colors',
-        active ? 'border-green-500 bg-green-50/60' : 'border-slate-100 bg-white hover:border-green-200',
+        'w-full text-left rounded-2xl border p-4 transition-all duration-300 relative group overflow-hidden',
+        active 
+          ? 'border-green-500 bg-white shadow-md ring-1 ring-green-500/20' 
+          : 'border-slate-100 bg-white/50 hover:bg-white hover:border-green-200 hover:shadow-sm',
       ].join(' ')}
     >
-      <div className="flex items-start gap-2">
-        <Hash size={16} className="text-slate-400 shrink-0 mt-0.5" />
-        <div className="min-w-0 flex-1">
-          <p className="font-display font-semibold text-slate-800 text-sm line-clamp-2">{thread.title}</p>
-          <p className="text-[11px] text-slate-400 mt-1">
-            {thread.authorName ?? '—'} · {thread.postCount ?? 0} message(s)
-          </p>
+      {active && (
+        <motion.div 
+          layoutId="active-pill"
+          className="absolute left-0 top-0 bottom-0 w-1 bg-green-500 rounded-r-full" 
+        />
+      )}
+      <div className="flex items-start gap-3">
+        <div className={[
+          'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors',
+          active ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400 group-hover:bg-green-50 group-hover:text-green-500'
+        ].join(' ')}>
+          <Hash size={18} />
         </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-display font-bold text-slate-800 text-sm line-clamp-1 group-hover:text-green-700 transition-colors">
+            {thread.title}
+          </p>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{thread.authorName ?? '—'}</span>
+            <span className="text-[10px] text-slate-300">•</span>
+            <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+              <MessageSquare size={10} />
+              {thread.postCount ?? 0}
+            </div>
+          </div>
+        </div>
+        <ChevronRight size={14} className={['mt-1 transition-transform', active ? 'text-green-500 translate-x-1' : 'text-slate-300 group-hover:text-slate-400'].join(' ')} />
       </div>
-    </button>
+    </motion.button>
   );
 }
 
@@ -206,215 +230,344 @@ export default function Forum() {
 
   if (!currentCoop) {
     return (
-      <div className="card">
-        <h2 className="font-display font-bold text-slate-800">Forum</h2>
-        <p className="text-sm text-slate-500 mt-2">Choisissez une coopérative pour accéder au forum.</p>
+      <div className="card max-w-md mx-auto mt-12 text-center py-12 px-8">
+        <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+          <MessageSquare size={32} className="text-slate-300" />
+        </div>
+        <h2 className="font-display font-bold text-slate-800 text-xl">Accès restreint</h2>
+        <p className="text-sm text-slate-500 mt-3 leading-relaxed">
+          Veuillez sélectionner ou rejoindre une coopérative pour accéder aux discussions de la communauté.
+        </p>
       </div>
     );
   }
 
-  const totalPosts = threads.reduce((a, t) => a + (Number(t.postCount) || 0), 0);
-
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="card flex items-center gap-3 py-4">
-          <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
-            <MessageSquare size={16} className="text-green-600" />
+    <div className="flex flex-col gap-6">
+      {/* Stats Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+      >
+        <div className="card bg-gradient-to-br from-white to-green-50/30 flex items-center gap-4 py-5 hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-green-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-200">
+            <MessageSquare size={20} className="text-white" />
           </div>
           <div>
-            <p className="font-display font-bold text-slate-800 text-xl leading-none">{threads.length}</p>
-            <p className="text-[11px] text-slate-400 font-semibold mt-1">Sujets</p>
+            <p className="font-display font-bold text-slate-800 text-2xl leading-none">{threads.length}</p>
+            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Sujets Actifs</p>
           </div>
         </div>
-        <div className="card flex items-center gap-3 py-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-            <Users size={16} className="text-blue-600" />
+        <div className="card bg-gradient-to-br from-white to-blue-50/30 flex items-center gap-4 py-5 hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-200">
+            <Users size={20} className="text-white" />
           </div>
           <div>
-            <p className="font-display font-bold text-slate-800 text-xl leading-none">{membersCount ?? '—'}</p>
-            <p className="text-[11px] text-slate-400 font-semibold mt-1">Membres (coop)</p>
+            <p className="font-display font-bold text-slate-800 text-2xl leading-none">{membersCount ?? '—'}</p>
+            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Membres Coop</p>
           </div>
         </div>
-        <div className="card flex items-center gap-3 py-4">
-          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-            <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
+        <div className="card bg-gradient-to-br from-white to-indigo-50/30 flex items-center gap-4 py-5 hover:shadow-md transition-shadow">
+          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-200 relative overflow-hidden">
+             <motion.div 
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-white/20 rounded-full" 
+             />
+             <div className="w-3 h-3 bg-green-400 rounded-full border-2 border-indigo-600 z-10" />
           </div>
           <div>
-            <p className="font-display font-bold text-slate-800 text-xl leading-none">{onlineCount}</p>
-            <p className="text-[11px] text-slate-400 font-semibold mt-1">En ligne</p>
+            <p className="font-display font-bold text-slate-800 text-2xl leading-none">{onlineCount}</p>
+            <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">En Ligne</p>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-6 lg:items-start">
-        <div className="flex flex-col gap-3 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)]">
-          <div className="flex flex-wrap gap-2">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                className="input pl-10"
-                placeholder="Rechercher…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-            <button type="button" className="btn-primary whitespace-nowrap" onClick={() => setShowNew(true)}>
-              <Plus size={16} /> Nouveau sujet
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-2 overflow-y-auto lg:pr-1 max-h-[50vh] lg:max-h-[calc(100vh-14rem)]">
-            {loading && threads.length === 0 ? (
-              <p className="text-sm text-slate-400 py-8 text-center">Chargement…</p>
-            ) : filtered.length === 0 ? (
-              <div className="card text-center py-12 text-slate-400 text-sm">
-                Aucun sujet. Lancez une discussion depuis « Nouveau sujet ».
-              </div>
-            ) : (
-              filtered.map((t) => (
-                <ThreadRow
-                  key={t._id}
-                  thread={t}
-                  active={activeThread?._id === t._id}
-                  onSelect={(thr) => {
-                    setActiveThread(thr);
-                    // Mark as read
-                    const stored = localStorage.getItem(`read_counts_${user._id}`);
-                    const readCounts = stored ? JSON.parse(stored) : {};
-                    readCounts[thr._id] = thr.postCount || 0;
-                    localStorage.setItem(`read_counts_${user._id}`, JSON.stringify(readCounts));
-                    
-                    // Update global count
-                    if (typeof setUnreadForumCount === 'function') {
-                      const newTotal = threads.reduce((acc, current) => {
-                        const lastRead = current._id === thr._id ? (current.postCount || 0) : (readCounts[current._id] || 0);
-                        const diff = (current.postCount || 0) - lastRead;
-                        return acc + (diff > 0 ? diff : 0);
-                      }, 0);
-                      setUnreadForumCount(newTotal);
-                    }
-
-                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }}
+      <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[360px_1fr] lg:items-start">
+        {/* Sidebar */}
+        <div className="flex flex-col gap-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)]">
+          <div className="flex flex-col gap-3">
+             <div className="flex items-center justify-between px-1">
+               <h3 className="font-display font-bold text-slate-800 flex items-center gap-2">
+                 <Hash size={18} className="text-green-600" /> Discussion
+               </h3>
+               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{filtered.length} SUJETS</span>
+             </div>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  className="input pl-10 h-12 bg-white/70 backdrop-blur-sm border-slate-200/60"
+                  placeholder="Filtrer les sujets..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-              ))
-            )}
+              </div>
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="button" 
+                className="btn-primary w-12 h-12 !p-0 justify-center shadow-lg shadow-green-200" 
+                onClick={() => setShowNew(true)}
+              >
+                <Plus size={20} />
+              </motion.button>
+            </div>
           </div>
 
-          {activeThread && (
-            <button
-              type="button"
-              className="lg:hidden btn-outline justify-center text-sm"
-              onClick={() => setActiveThread(null)}
-            >
-              Masquer la discussion
-            </button>
-          )}
+          <div className="flex flex-col gap-2.5 overflow-y-auto lg:pr-2 custom-scrollbar max-h-[50vh] lg:max-h-[calc(100vh-16rem)]">
+            <AnimatePresence mode="popLayout">
+              {loading && threads.length === 0 ? (
+                <div className="py-12 flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chargement...</p>
+                </div>
+              ) : filtered.length === 0 ? (
+                <motion.div 
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  className="card bg-slate-50/50 border-dashed border-2 border-slate-200 text-center py-12 px-6"
+                >
+                  <Search size={32} className="mx-auto mb-4 text-slate-200" />
+                  <p className="text-sm font-semibold text-slate-500">Aucun résultat trouvé</p>
+                  <p className="text-xs text-slate-400 mt-1">Essayez d'autres mots-clés ou créez un sujet.</p>
+                </motion.div>
+              ) : (
+                filtered.map((t, idx) => (
+                  <motion.div
+                    key={t._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <ThreadRow
+                      thread={t}
+                      active={activeThread?._id === t._id}
+                      onSelect={(thr) => {
+                        setActiveThread(thr);
+                        const stored = localStorage.getItem(`read_counts_${user._id}`);
+                        const readCounts = stored ? JSON.parse(stored) : {};
+                        readCounts[thr._id] = thr.postCount || 0;
+                        localStorage.setItem(`read_counts_${user._id}`, JSON.stringify(readCounts));
+                        
+                        if (typeof setUnreadForumCount === 'function') {
+                          const newTotal = threads.reduce((acc, current) => {
+                            const lastRead = current._id === thr._id ? (current.postCount || 0) : (readCounts[current._id] || 0);
+                            const diff = (current.postCount || 0) - lastRead;
+                            return acc + (diff > 0 ? diff : 0);
+                          }, 0);
+                          setUnreadForumCount(newTotal);
+                        }
+
+                        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                          window.scrollTo({ top: 300, behavior: 'smooth' });
+                        }
+                      }}
+                    />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
+        {/* Chat Area */}
         <div
           className={[
-            'card flex flex-col min-h-[320px] lg:min-h-[480px]',
-            !activeThread ? 'hidden lg:flex' : 'flex',
-            !activeThread ? 'lg:items-center lg:justify-center text-slate-400 text-sm text-center px-8' : '',
+            'card !p-0 flex flex-col min-h-[500px] lg:h-[calc(100vh-10rem)] shadow-xl border-slate-200/50 relative overflow-hidden transition-all duration-500',
+            !activeThread ? 'hidden lg:flex bg-slate-50/30' : 'flex bg-white',
           ].join(' ')}
         >
           {!activeThread ? (
-            <div>
-              <MessageSquare size={36} className="mx-auto mb-3 opacity-30 text-slate-300" />
-              <p className="font-semibold text-slate-600">Sélectionnez un sujet</p>
-              <p className="text-xs mt-1 text-slate-400">Les messages viennent du serveur, sans jeu de données local.</p>
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+              <div className="relative mb-8">
+                 <div className="absolute inset-0 bg-green-100 rounded-full blur-2xl opacity-50" />
+                 <div className="relative w-24 h-24 bg-white rounded-3xl shadow-lg border border-slate-100 flex items-center justify-center rotate-3">
+                    <MessageSquare size={48} className="text-green-500" />
+                 </div>
+              </div>
+              <h3 className="font-display font-bold text-slate-800 text-xl">Sujet de discussion</h3>
+              <p className="text-sm text-slate-400 mt-3 max-w-xs leading-relaxed">
+                Sélectionnez un sujet dans la liste pour rejoindre la conversation ou lancez-en un nouveau.
+              </p>
             </div>
           ) : (
             <>
-              <div className="border-b border-slate-100 pb-4 mb-4">
-                <h2 className="font-display font-bold text-slate-800 text-lg leading-snug flex items-start gap-2">
-                  <Hash size={20} className="text-green-600 shrink-0 mt-0.5" />
-                  <span>{activeThread.title}</span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-2">
-                  Lancé par <span className="font-bold text-slate-600">{activeThread.authorName}</span> • {new Date(activeThread.createdAt).toLocaleDateString('fr-FR')}
-                </p>
+              {/* Chat Header */}
+              <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20">
+                <div className="flex items-center gap-4 min-w-0">
+                   <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white font-bold shrink-0 shadow-lg shadow-green-100">
+                      {activeThread.authorName?.charAt(0) || <Hash size={18} />}
+                   </div>
+                   <div className="min-w-0">
+                     <h2 className="font-display font-bold text-slate-800 text-base line-clamp-1 flex items-center gap-2">
+                       {activeThread.title}
+                     </h2>
+                     <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Actif</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-[10px] text-slate-400 font-medium">{activeThread.authorName}</span>
+                     </div>
+                   </div>
+                </div>
+                <button 
+                  onClick={() => setActiveThread(null)}
+                  className="lg:hidden p-2 hover:bg-slate-50 rounded-xl text-slate-400 transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-4 mb-4 max-h-[45vh] sm:max-h-[50vh]">
-                {activeThread.content ? (
-                  <div className="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-700 whitespace-pre-wrap">
-                    {activeThread.content}
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30">
+                {activeThread.content && (
+                  <div className="flex flex-col items-center mb-8">
+                     <div className="max-w-[90%] bg-white border border-slate-100 rounded-2xl p-5 shadow-sm text-sm text-slate-700 relative">
+                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-600 text-[9px] font-black text-white px-3 py-1 rounded-full uppercase tracking-widest">Sujet Original</div>
+                        <p className="whitespace-pre-wrap leading-relaxed">{activeThread.content}</p>
+                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                           <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                              <User size={12} /> {activeThread.authorName}
+                           </div>
+                           <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                              <Clock size={12} /> {new Date(activeThread.createdAt).toLocaleDateString()}
+                           </div>
+                        </div>
+                     </div>
                   </div>
-                ) : null}
-                {posts.map((p) => {
-                  const isMe = String(p.authorId) === String(user?._id);
-                  return (
-                    <div key={p._id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                      {!isMe && <p className="text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">{p.authorName}</p>}
-                      <div 
-                        className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm shadow-sm ${
-                          isMe 
-                            ? 'bg-green-600 text-white rounded-tr-none' 
-                            : 'bg-slate-100 text-slate-700 rounded-tl-none border border-slate-200'
-                        }`}
+                )}
+
+                <AnimatePresence>
+                  {posts.map((p, idx) => {
+                    const isMe = String(p.authorId) === String(user?._id);
+                    return (
+                      <motion.div 
+                        key={p._id}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                       >
-                        <p className="whitespace-pre-wrap">{p.content}</p>
-                        <p className={`text-[9px] mt-1 text-right opacity-60 ${isMe ? 'text-white' : 'text-slate-400'}`}>
-                          {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+                        {!isMe && (
+                          <span className="text-[10px] font-black text-slate-400 mb-1.5 ml-2 uppercase tracking-widest">
+                            {p.authorName}
+                          </span>
+                        )}
+                        <div 
+                          className={[
+                            'max-w-[80%] px-5 py-3.5 rounded-2xl text-sm relative group',
+                            isMe 
+                              ? 'bg-gradient-to-br from-green-600 to-green-700 text-white rounded-tr-none shadow-lg shadow-green-100' 
+                              : 'bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-sm'
+                          ].join(' ')}
+                        >
+                          <p className="whitespace-pre-wrap leading-relaxed">{p.content}</p>
+                          <div className={[
+                            'text-[9px] mt-2 flex items-center gap-1.5 opacity-60 font-medium',
+                            isMe ? 'justify-end' : 'justify-start'
+                          ].join(' ')}>
+                            {new Date(p.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {isMe && <div className="w-1 h-1 bg-white/50 rounded-full" />}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
                 <div ref={messagesEndRef} />
               </div>
 
-              <form onSubmit={handleSendReply} className="flex gap-2 pt-3 border-t border-slate-100">
-                <input
-                  className="input flex-1"
-                  placeholder="Votre message…"
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                />
-                <button type="submit" className="btn-primary shrink-0" disabled={!reply.trim()}>
-                  <Send size={14} /> Envoyer
-                </button>
-              </form>
+              {/* Chat Input */}
+              <div className="p-4 bg-white border-t border-slate-100">
+                <form 
+                  onSubmit={handleSendReply} 
+                  className="flex gap-2 bg-slate-50 p-1.5 rounded-[20px] border border-slate-100 focus-within:border-green-300 focus-within:ring-4 focus-within:ring-green-50 transition-all"
+                >
+                  <input
+                    className="flex-1 bg-transparent border-none outline-none px-4 text-sm text-slate-700 placeholder:text-slate-400"
+                    placeholder="Écrire votre message ici..."
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                  />
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="submit" 
+                    className="w-11 h-11 bg-green-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-green-100 disabled:opacity-50 disabled:shadow-none" 
+                    disabled={!reply.trim()}
+                  >
+                    <Send size={18} />
+                  </motion.button>
+                </form>
+              </div>
             </>
           )}
         </div>
       </div>
 
-      {showNew && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h3 className="font-display font-bold text-slate-800">Nouveau sujet</h3>
-              <button type="button" className="p-2 rounded-lg hover:bg-slate-100 text-slate-400 border-none bg-transparent cursor-pointer" onClick={() => setShowNew(false)} aria-label="Fermer">
-                <X size={18} />
-              </button>
-            </div>
-            <form onSubmit={handleCreateThread} className="flex flex-col gap-4 px-6 py-5 overflow-y-auto">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Titre</label>
-                <input className="input" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required maxLength={200} />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Premier message</label>
-                <textarea className="input min-h-[140px] resize-y" value={newBody} onChange={(e) => setNewBody(e.target.value)} required />
-              </div>
-              <div className="flex gap-3 justify-end">
-                <button type="button" className="btn-outline" onClick={() => setShowNew(false)}>
-                  Annuler
+      {/* New Subject Modal */}
+      <AnimatePresence>
+        {showNew && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
+              onClick={() => setShowNew(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[32px] shadow-2xl w-full max-w-xl flex flex-col relative z-10 overflow-hidden"
+            >
+              <div className="flex items-center justify-between px-8 py-6 border-b border-slate-50">
+                <div>
+                  <h3 className="font-display font-bold text-slate-800 text-xl tracking-tight">Nouveau Sujet</h3>
+                  <p className="text-xs text-slate-400 mt-1 uppercase font-bold tracking-widest">Lancez une discussion</p>
+                </div>
+                <button 
+                  type="button" 
+                  className="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-slate-50 text-slate-400 transition-colors" 
+                  onClick={() => setShowNew(false)}
+                >
+                  <X size={20} />
                 </button>
-                <button type="submit" className="btn-primary">
-                  Publier
-                </button>
               </div>
-            </form>
+              <form onSubmit={handleCreateThread} className="flex flex-col gap-6 px-8 py-8">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] ml-1">Titre de la discussion</label>
+                  <input 
+                    className="input h-14 !bg-slate-50 border-slate-100 focus:!bg-white" 
+                    placeholder="De quoi voulez-vous parler ?"
+                    value={newTitle} 
+                    onChange={(e) => setNewTitle(e.target.value)} 
+                    required 
+                    maxLength={200} 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[2px] ml-1">Message principal</label>
+                  <textarea 
+                    className="input min-h-[160px] resize-none !bg-slate-50 border-slate-100 focus:!bg-white !py-4" 
+                    placeholder="Détaillez votre pensée..."
+                    value={newBody} 
+                    onChange={(e) => setNewBody(e.target.value)} 
+                    required 
+                  />
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button type="button" className="btn-outline flex-1 h-14 rounded-2xl" onClick={() => setShowNew(false)}>
+                    Annuler
+                  </button>
+                  <button type="submit" className="btn-primary flex-1 h-14 rounded-2xl shadow-xl shadow-green-100 text-base">
+                    Publier le sujet
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }

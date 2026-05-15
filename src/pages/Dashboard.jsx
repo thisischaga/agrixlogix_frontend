@@ -193,6 +193,42 @@ export default function Dashboard() {
     }
   };
 
+  const handleSyncBlockchain = async () => {
+    if (!currentCoop?._id) return;
+    try {
+      showToast?.('⌛ Réparation de la chaîne en cours...');
+      await client.post(`/cooperatives/${currentCoop._id}/blockchain/sync`);
+      showToast?.('✅ Chaîne synchronisée et scellée ✓');
+      verifyBlockchain(); // Relancer l'audit
+    } catch (err) {
+      console.error(err);
+      showToast?.('Échec de la synchronisation', 'error');
+    }
+  };
+
+  const handleExportAudit = async () => {
+    if (!currentCoop?._id) return;
+    try {
+      showToast?.('⌛ Génération du rapport d\'audit...');
+      const response = await client.get(`/cooperatives/${currentCoop._id}/blockchain/export`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `audit_${currentCoop.name.replace(/\s+/g, '_')}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      showToast?.('✅ Rapport d\'audit téléchargé !');
+    } catch (err) {
+      console.error(err);
+      showToast?.('Échec de l\'export du rapport', 'error');
+    }
+  };
+
+
   const handleCreateCoop = async (e) => {
     e.preventDefault();
     if (!newCoop.name) return showToast('Le nom est obligatoire');
@@ -451,7 +487,9 @@ export default function Dashboard() {
             verifying={verifying}
             auditResult={auditResult}
             onVerify={verifyBlockchain}
-            onAction={(msg) => showToast?.(msg)}
+            onAction={handleExportAudit}
+            onSync={handleSyncBlockchain}
+            isAdmin={currentCoop?.adminId === user?._id || user?.role === 'Admin' || user?.role === 'Président'}
           />
         </div>
         <div className="xl:col-span-8">
