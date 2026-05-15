@@ -48,9 +48,18 @@ export default function Settings() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     
-    // Validation du téléphone (format international basique)
-    if (profileForm.phone && !/^\+?[1-9]\d{1,14}$/.test(profileForm.phone.replace(/\s/g, ''))) {
-      return showToast('Format de téléphone invalide (Ex: +228 90000000)');
+    // Validation internationale via API
+    if (profileForm.phone) {
+      try {
+        const verifyRes = await client.post('/verify-phone', { phone: profileForm.phone });
+        if (!verifyRes.data.valid) {
+          return showToast(`Numéro invalide pour le pays détecté (${verifyRes.data.country || 'Inconnu'})`);
+        }
+        // Utiliser le format international propre renvoyé par l'API
+        profileForm.phone = verifyRes.data.formatted;
+      } catch (err) {
+        console.warn('Phone verification skip due to error', err);
+      }
     }
 
     setLoading(true);
