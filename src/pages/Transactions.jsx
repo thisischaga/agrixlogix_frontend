@@ -7,6 +7,8 @@ import TransactionsTable from '../components/tables/TransactionsTable';
 import client from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { mapTransaction } from '../utils/apiMappings';
+import { AFRICAN_COUNTRIES, detectOperator, validateOperatorNumber, validateBankAccount } from '../utils/phoneUtils';
+import { SkeletonList } from '../components/Skeleton';
 
 const CATEGORIES = ['Toutes', 'Vente', 'Équipement', 'Cotisation', 'Subvention', 'Transport', 'Fonctionnement'];
 const TYPES      = ['Tous', 'credit', 'debit'];
@@ -41,9 +43,34 @@ export default function Transactions() {
     paymentMethod: '',     // MTN / Moov / Flooz / T-Money / Virement ...
     accountNumber: '',     // numéro tel ou compte bancaire
   });
-
-  // Erreur de validation du numéro de compte
+  const [customOperator, setCustomOperator] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('TG');
+  const [detectedOperator, setDetectedOperator] = useState(null);
+  const [isDetecting, setIsDetecting] = useState(false);
   const [accountError, setAccountError] = useState('');
+
+  // Détection automatique locale de l'opérateur
+  useEffect(() => {
+    if (newTx.accountType === 'mobile' && newTx.accountNumber?.length >= 2) {
+      const op = detectOperator(newTx.accountNumber, selectedCountry);
+      if (op) {
+        setDetectedOperator(op);
+        setNewTx(prev => ({ ...prev, paymentMethod: op.name }));
+      } else {
+        setDetectedOperator(null);
+      }
+    } else {
+      setDetectedOperator(null);
+    }
+  }, [newTx.accountNumber, newTx.accountType, selectedCountry]);
+
+  // Synchroniser le pays par défaut avec la localisation de la coop
+  useEffect(() => {
+    if (currentCoop?.location) {
+      const country = AFRICAN_COUNTRIES.find(c => currentCoop.location.includes(c.name));
+      if (country) setSelectedCountry(country.code);
+    }
+  }, [currentCoop?.location]);
 
   /** Valide le numéro de compte selon le type choisi */
   function validateAccountNumber(num, type) {
@@ -53,19 +80,23 @@ export default function Transactions() {
       if (!/^\d{7,15}$/.test(clean)) return 'Numéro Mobile Money invalide (7 à 15 chiffres)';
     }
     if (type === 'bancaire') {
-      if (num.trim().length < 5) return 'Numéro de compte bancaire invalide (min. 5 caractères)';
+      const v = validateBankAccount(num);
+      return v.valid ? '' : v.error;
     }
     return '';
   }
 
   const loadTransactions = useCallback(async () => {
     if (!currentCoop?._id) return;
+    setLoading(true);
     try {
       const res = await client.get(`/cooperatives/${currentCoop._id}/transactions`);
       setTransactions(res.data.map(mapTransaction));
     } catch (err) {
       console.error('Erreur chargement transactions', err.message || err);
       showToast?.(apiError(err));
+    } finally {
+      setLoading(false);
     }
   }, [currentCoop?._id, showToast]);
 
@@ -113,6 +144,12 @@ export default function Transactions() {
       return;
     }
 
+    let finalOperator = newTx.paymentMethod;
+    if (newTx.paymentMethod === 'Autre') {
+      if (!customOperator.trim()) { showToast("Précisez le nom de l'opérateur."); return; }
+      finalOperator = customOperator.trim();
+    }
+
     // Validation moyen de paiement
     if (newTx.accountType === 'mobile') {
       if (!newTx.paymentMethod) { showToast("Sélectionnez l'opérateur Mobile Money."); return; }
@@ -133,7 +170,7 @@ export default function Transactions() {
         type: newTx.type,
         category: newTx.category,
         accountType:   newTx.accountType   || undefined,
-        paymentMethod: newTx.paymentMethod || undefined,
+        paymentMethod: finalOperator || undefined,
         accountNumber: newTx.accountNumber ? newTx.accountNumber.replace(/[\s-]/g, '') : undefined,
       });
       showToast('Transaction enregistrée ✓');
@@ -400,23 +437,71 @@ export default function Transactions() {
                   </button>
                 </div>
 
-                {/* Opérateur / Mode */}
-                {newTx.accountType && (
+                {/* Pays et Opérateur */}
+                {newTx.accountType === 'mobile' && (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Pays</label>
+                        <select 
+                          className="input h-10 text-xs font-bold"
+                          value={selectedCountry}
+                          onChange={(e) => {
+                            setSelectedCountry(e.target.value);
+                            setNewTx(s => ({ ...s, paymentMethod: '', accountNumber: '' }));
+                            setCustomOperator('');
+                            setAccountError('');
+                          }}
+                        >
+                          {AFRICAN_COUNTRIES.map(c => (
+                            <option key={c.code} value={c.code}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Opérateur</label>
+                        <select 
+                          className="input h-10 text-xs font-bold"
+                          value={newTx.paymentMethod}
+                          onChange={(e) => {
+                            setNewTx(s => ({ ...s, paymentMethod: e.target.value }));
+                            setAccountError('');
+                          }}
+                        >
+                          <option value="">Sélectionner...</option>
+                          {AFRICAN_COUNTRIES.find(c => c.code === selectedCountry)?.operators.map(op => (
+                            <option key={op.id} value={op.name}>{op.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {newTx.paymentMethod === 'Autre' && (
+                      <div className="space-y-1.5 animate-in fade-in slide-in-from-top-2">
+                        <label className="block text-[10px] font-bold text-slate-400 uppercase ml-1">Nom du service Mobile Money</label>
+                        <input 
+                          className="input h-10 text-xs font-bold"
+                          placeholder="Ex: Orange Money, Wave, etc."
+                          value={customOperator}
+                          onChange={(e) => setCustomOperator(e.target.value)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {newTx.accountType === 'bancaire' && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                      {newTx.accountType === 'mobile' ? 'Opérateur' : 'Mode'}
-                    </label>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Mode</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {(newTx.accountType === 'mobile' ? MOBILE_OPERATORS : BANKING_OPERATORS).map(op => (
+                      {BANKING_OPERATORS.map(op => (
                         <button
                           key={op}
                           type="button"
                           onClick={() => setNewTx(s => ({ ...s, paymentMethod: op }))}
                           className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
                             newTx.paymentMethod === op
-                              ? newTx.accountType === 'mobile'
-                                ? 'border-green-500 bg-green-500 text-white'
-                                : 'border-blue-500 bg-blue-500 text-white'
+                              ? 'border-blue-500 bg-blue-500 text-white'
                               : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                           }`}
                         >
@@ -427,39 +512,60 @@ export default function Transactions() {
                   </div>
                 )}
 
-                {/* Numéro de compte */}
-                {newTx.accountType && (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                      {newTx.accountType === 'mobile' ? 'Numéro de téléphone' : 'Numéro de compte'}
-                    </label>
-                    <div className="relative">
-                      {newTx.accountType === 'mobile'
-                        ? <Smartphone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                        : <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                      }
-                      <input
-                        className={`input pl-9 font-mono ${
-                          accountError ? 'border-red-400 focus:border-red-500 bg-red-50' : ''
-                        }`}
-                        placeholder={newTx.accountType === 'mobile' ? 'Ex : 90 12 34 56' : 'Ex : TG53 AG12 3456 7890'}
-                        value={newTx.accountNumber}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setNewTx(s => ({ ...s, accountNumber: val }));
-                          setAccountError(validateAccountNumber(val, newTx.accountType));
-                        }}
-                        inputMode={newTx.accountType === 'mobile' ? 'numeric' : 'text'}
-                      />
-                    </div>
-                    {accountError && (
-                      <p className="text-xs text-red-500 mt-1 font-medium">{accountError}</p>
-                    )}
-                    {!accountError && newTx.accountNumber && (
-                      <p className="text-xs text-green-600 mt-1 font-medium">✓ Numéro valide</p>
-                    )}
-                  </div>
-                )}
+                 {/* Numéro de compte */}
+                 {newTx.accountType && (
+                   <div className="space-y-2">
+                     <label className="block text-xs font-bold text-slate-500 uppercase">
+                       {newTx.accountType === 'mobile' ? 'Numéro de téléphone' : 'Numéro de compte'}
+                     </label>
+                     <div className="relative">
+                       {newTx.accountType === 'mobile'
+                         ? <Smartphone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                         : <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                       }
+                       <input
+                         className={`input pl-9 font-mono ${
+                           accountError ? 'border-red-400 focus:border-red-500 bg-red-50' : ''
+                         }`}
+                         placeholder={newTx.accountType === 'mobile' ? 'Numéro de téléphone' : 'Numéro de compte'}
+                         value={newTx.accountNumber}
+                         onChange={(e) => {
+                           const val = e.target.value;
+                           setNewTx(s => ({ ...s, accountNumber: val }));
+                           
+                           if (newTx.accountType === 'mobile' && newTx.paymentMethod) {
+                              const country = AFRICAN_COUNTRIES.find(c => c.code === selectedCountry);
+                              const operator = country?.operators.find(op => op.name === newTx.paymentMethod);
+                              if (operator) {
+                                const v = validateOperatorNumber(val, selectedCountry, operator.id);
+                                setAccountError(v.valid ? '' : v.error);
+                              }
+                           } else {
+                              setAccountError(validateAccountNumber(val, newTx.accountType));
+                           }
+                         }}
+                         inputMode={newTx.accountType === 'mobile' ? 'numeric' : 'text'}
+                       />
+                     </div>
+
+                     {/* Feedback Opérateur */}
+                     {newTx.accountType === 'mobile' && detectedOperator && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl border animate-in fade-in slide-in-from-top-1" style={{ backgroundColor: `${detectedOperator.color}10`, borderColor: `${detectedOperator.color}30` }}>
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: detectedOperator.color }} />
+                          <span className="text-[11px] font-bold" style={{ color: detectedOperator.color }}>
+                            {detectedOperator.name} détecté
+                          </span>
+                        </div>
+                     )}
+
+                     {accountError && (
+                       <p className="text-xs text-red-500 font-medium">{accountError}</p>
+                     )}
+                     {!accountError && newTx.accountNumber && !detectedOperator && (
+                       <p className="text-xs text-green-600 font-medium">✓ Format valide</p>
+                     )}
+                   </div>
+                 )}
 
                 {!newTx.accountType && (
                   <p className="text-[11px] text-slate-400 text-center italic">

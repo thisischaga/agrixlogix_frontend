@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import client, { getSocketOrigin } from '../api/client';
+import { SkeletonList, SkeletonRow } from '../components/Skeleton';
 
 function ThreadRow({ thread, active, onSelect }) {
   return (
@@ -318,11 +319,8 @@ export default function Forum() {
 
           <div className="flex flex-col gap-2.5 overflow-y-auto lg:pr-2 custom-scrollbar max-h-[50vh] lg:max-h-[calc(100vh-16rem)]">
             <AnimatePresence mode="popLayout">
-              {loading && threads.length === 0 ? (
-                <div className="py-12 flex flex-col items-center gap-3">
-                  <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chargement...</p>
-                </div>
+              {loading ? (
+                <SkeletonList count={6} />
               ) : filtered.length === 0 ? (
                 <motion.div 
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }}

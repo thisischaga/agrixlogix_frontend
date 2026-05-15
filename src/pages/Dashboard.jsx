@@ -17,6 +17,7 @@ import AuditCard from '../components/cards/AuditCard';
 import ContributionModal from '../components/modals/ContributionModal';
 import TransferModal from '../components/modals/TransferModal';
 import { confirmFedaPayContribution } from '../api/paymentApi';
+import { SkeletonStat, SkeletonList } from '../components/Skeleton';
 
 const FEDAPAY_SESSION_KEY = 'fedapay_pending';
 
@@ -400,81 +401,92 @@ export default function Dashboard() {
 
       {/* Main Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Treasury Card */}
-        <motion.div
-          whileHover={{ y: -4 }}
-          className="card bg-white border-none shadow-xl shadow-green-900/5 p-6 relative overflow-hidden"
-        >
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-1">Trésorerie Totale</p>
-              <h3 className="font-display text-3xl font-bold text-slate-900">
-                {loading ? '—' : formatCurrency(balance)}
-              </h3>
+        {loading ? (
+          <>
+            <SkeletonStat />
+            <SkeletonStat />
+            <div className="grid grid-cols-2 gap-4">
+               <div className="bg-white p-5 rounded-2xl border border-slate-100 h-full animate-pulse" />
+               <div className="bg-white p-5 rounded-2xl border border-slate-100 h-full animate-pulse" />
             </div>
-            <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
-              <Wallet size={24} />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-              {growth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
-            </div>
-            <span className="text-[11px] text-slate-400 font-medium">vs mois dernier</span>
-          </div>
-          <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-green-900">
-            <Activity size={120} />
-          </div>
-        </motion.div>
+          </>
+        ) : (
+          <>
+            {/* Treasury Card */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="card bg-white border-none shadow-xl shadow-green-900/5 p-6 relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] mb-1">Trésorerie Totale</p>
+                  <h3 className="font-display text-3xl font-bold text-slate-900">
+                    {formatCurrency(balance)}
+                  </h3>
+                </div>
+                <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center text-green-600">
+                  <Wallet size={24} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {growth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
+                </div>
+                <span className="text-[11px] text-slate-400 font-medium">vs mois dernier</span>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-green-900">
+                <Activity size={120} />
+              </div>
+            </motion.div>
 
-        {/* Personal Balance Card */}
-        <motion.div
-          whileHover={{ y: -4 }}
-          className="card bg-gradient-to-br from-blue-600 to-indigo-700 border-none shadow-xl shadow-blue-900/20 p-6 relative overflow-hidden"
-        >
-          <div className="flex justify-between items-start mb-6">
-            <div>
-              <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.1em] mb-1">Solde Théorique (Cotisations)</p>
-              <h3 className="font-display text-3xl font-bold text-white">
-                {loading ? '—' : formatCurrency(userBalance)}
-              </h3>
-            </div>
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white">
-              <Shield size={24} />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-blue-100 font-medium">Cumul total de vos cotisations</span>
-          </div>
-          <div className="absolute -right-4 -bottom-4 opacity-[0.1] text-white">
-            <TrendingUp size={120} />
-          </div>
-        </motion.div>
+            {/* Personal Balance Card */}
+            <motion.div
+              whileHover={{ y: -4 }}
+              className="card bg-gradient-to-br from-blue-600 to-indigo-700 border-none shadow-xl shadow-blue-900/20 p-6 relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.1em] mb-1">Solde Théorique (Cotisations)</p>
+                  <h3 className="font-display text-3xl font-bold text-white">
+                    {formatCurrency(userBalance)}
+                  </h3>
+                </div>
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center text-white">
+                  <Shield size={24} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-blue-100 font-medium">Cumul total de vos cotisations</span>
+              </div>
+              <div className="absolute -right-4 -bottom-4 opacity-[0.1] text-white">
+                <TrendingUp size={120} />
+              </div>
+            </motion.div>
 
-        {/* Members & Votes */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
-            <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-              <Users size={20} />
+            {/* Members & Votes */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
+                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membres</p>
+                  <p className="font-display text-2xl font-bold text-slate-800">{membersCount}</p>
+                </div>
+              </div>
+              <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
+                <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                  <ClipboardList size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Votes Actifs</p>
+                  <p className="font-display text-2xl font-bold text-slate-800">{activeVotes}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Membres</p>
-              <p className="font-display text-2xl font-bold text-slate-800">{membersCount}</p>
-            </div>
-          </div>
-          <div className="card bg-white border-slate-100 flex flex-col justify-between p-5 shadow-sm">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
-              <ClipboardList size={20} />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Votes Actifs</p>
-              <p className="font-display text-2xl font-bold text-slate-800">{activeVotes}</p>
-            </div>
-          </div>
-        </div>
-
-
+          </>
+        )}
       </div>
 
       {/* Audit & Charts Section */}
@@ -528,7 +540,13 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {recentTx.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="3" className="p-0">
+                    <SkeletonList count={3} />
+                  </td>
+                </tr>
+              ) : recentTx.length === 0 ? (
                 <tr>
                   <td colSpan="3" className="py-10 text-center text-slate-400 italic">Aucune transaction récente</td>
                 </tr>

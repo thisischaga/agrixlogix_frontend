@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { SkeletonStat, SkeletonList } from '../components/Skeleton';
 
 // ── Helpers ─────────────────────────────────────────────────────
 function fmt(n) {
@@ -170,7 +171,10 @@ export default function Comptabilite() {
       {/* ── KPI Cards ── */}
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-36 rounded-[24px] bg-slate-100 animate-pulse" />)}
+          <SkeletonStat />
+          <SkeletonStat />
+          <SkeletonStat />
+          <SkeletonStat />
         </div>
       ) : data && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -240,7 +244,15 @@ export default function Comptabilite() {
       </div>
 
       {/* ── Contenu onglets ── */}
-      {loading && <div className="h-64 rounded-2xl bg-slate-100 animate-pulse" />}
+      {loading && (
+        <div className="card space-y-4">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="w-48 h-6 bg-slate-100 rounded-lg animate-pulse" />
+          </div>
+          <SkeletonList count={6} />
+        </div>
+      )}
 
       {/* BILAN */}
       {!loading && onglet === 'bilan' && data && (

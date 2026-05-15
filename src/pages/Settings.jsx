@@ -17,6 +17,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { validatePhone } from '../utils/phoneUtils';
 import { getInitials } from '../utils/formatCurrency';
 import client from '../api/client';
 
@@ -48,18 +49,13 @@ export default function Settings() {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     
-    // Validation internationale via API
+    // Validation internationale locale
     if (profileForm.phone) {
-      try {
-        const verifyRes = await client.post('/verify-phone', { phone: profileForm.phone });
-        if (!verifyRes.data.valid) {
-          return showToast(`Numéro invalide pour le pays détecté (${verifyRes.data.country || 'Inconnu'})`);
-        }
-        // Utiliser le format international propre renvoyé par l'API
-        profileForm.phone = verifyRes.data.formatted;
-      } catch (err) {
-        console.warn('Phone verification skip due to error', err);
+      const v = validatePhone(profileForm.phone);
+      if (!v.valid) {
+        return showToast(`Numéro invalide pour le pays détecté (${v.country || 'Inconnu'})`);
       }
+      profileForm.phone = v.formatted;
     }
 
     setLoading(true);
