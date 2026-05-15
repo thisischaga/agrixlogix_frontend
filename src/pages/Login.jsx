@@ -25,7 +25,7 @@ export default function Login() {
       await login(identifier, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Nom ou mot de passe incorrect.');
+      setError(err.response?.data?.error || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }

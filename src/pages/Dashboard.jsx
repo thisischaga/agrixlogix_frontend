@@ -202,7 +202,8 @@ export default function Dashboard() {
       verifyBlockchain(); // Relancer l'audit
     } catch (err) {
       console.error(err);
-      showToast?.('Échec de la synchronisation', 'error');
+      const errMsg = err.response?.data?.error || err.message || 'Échec de la synchronisation';
+      showToast?.(errMsg, 'error');
     }
   };
 
