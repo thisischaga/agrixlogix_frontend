@@ -404,12 +404,11 @@ export default function Comptabilite() {
                   <th className="text-left py-3 pr-4">Date</th>
                   <th className="text-left py-3 pr-4">Libellé</th>
                   <th className="text-left py-3 pr-4">Catégorie</th>
-                  <th className="text-left py-3 pr-4">Moyen / Compte</th>
+                  <th className="text-left py-3 pr-4">Moyen / Numéro de compte</th>
                   <th className="text-left py-3 pr-4">Source</th>
                   <th className="text-right py-3 pr-4">Débit</th>
                   <th className="text-right py-3 pr-4">Crédit</th>
-                  <th className="text-right py-3 pr-4">Solde après</th>
-                  <th className="text-right py-3">N° Pièce (Hash)</th>
+                  <th className="text-right py-3">Solde après</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -460,18 +459,8 @@ export default function Comptabilite() {
                     <td className="py-3 pr-4 text-right font-bold text-green-600">
                       {e.credit > 0 ? fmtShort(e.credit) : <span className="text-slate-200">—</span>}
                     </td>
-                    <td className={`py-3 pr-4 text-right font-bold ${e.soldeApres >= 0 ? 'text-violet-700' : 'text-red-600'}`}>
+                    <td className={`py-3 text-right font-bold ${e.soldeApres >= 0 ? 'text-violet-700' : 'text-red-600'}`}>
                       {fmtShort(e.soldeApres)}
-                    </td>
-                    <td className="py-3 text-right">
-                      {e.txHash ? (
-                        <div className="flex items-center justify-end gap-1 font-mono text-[9px] text-slate-300 group-hover:text-violet-500 transition-colors">
-                          <Hash size={10} />
-                          <span>{e.txHash.substring(0, 10)}...</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-200">En attente</span>
-                      )}
                     </td>
                   </tr>
                 ))}

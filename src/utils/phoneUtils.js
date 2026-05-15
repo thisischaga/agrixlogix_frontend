@@ -196,12 +196,19 @@ export const validateOperatorNumber = (phone, countryCode, operatorId) => {
     if (!phoneNumber || !phoneNumber.isValid()) {
       const localPhone = parsePhoneNumberFromString(country.dialCode + cleanPhone);
       if (!localPhone || !localPhone.isValid()) {
+        // Fallback permissif si libphonenumber rejette mais que le préfixe et la taille (8-15) sont bons
+        if (cleanPhone.length >= 8 && cleanPhone.length <= 15) {
+           return { valid: true, formatted: `${country.dialCode} ${cleanPhone}` };
+        }
         return { valid: false, error: 'Format de numéro invalide' };
       }
       return { valid: true, formatted: localPhone.formatInternational() };
     }
     return { valid: true, formatted: phoneNumber.formatInternational() };
   } catch (e) {
+    if (cleanPhone.length >= 8 && cleanPhone.length <= 15) {
+       return { valid: true, formatted: `${country.dialCode} ${cleanPhone}` };
+    }
     return { valid: false, error: 'Erreur de validation' };
   }
 };

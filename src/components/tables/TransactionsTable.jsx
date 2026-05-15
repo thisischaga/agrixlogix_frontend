@@ -77,17 +77,6 @@ export default function TransactionsTable({ data, onView, userRole, onValidate, 
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">{tx.label}</p>
 
-                    {/* Numéro de compte si disponible */}
-                    {tx.accountNumber && (
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5 flex items-center gap-1">
-                        {tx.accountType === 'bancaire'
-                          ? <Landmark size={9} className="text-slate-400" />
-                          : <Smartphone size={9} className="text-slate-400" />
-                        }
-                        {formatAccountNumber(tx.accountNumber, tx.accountType)}
-                      </p>
-                    )}
-
                     {/* Hash blockchain */}
                     <p className="text-[10px] text-slate-400 font-mono mt-0.5" title={tx.hash}>
                       {tx.hash && tx.hash !== '—'

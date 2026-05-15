@@ -25,16 +25,6 @@ export default function QuickActions({ onContribute, onTransfer }) {
       text: 'text-emerald-950',
     }, */
     {
-      id: 'withdraw',
-      href: '/transactions',
-      label: 'Demander un retrait',
-      sub: 'Soumettre une sortie au comité',
-      icon: Download,
-      bg: 'bg-amber-50',
-      iconBg: 'bg-amber-200',
-      text: 'text-amber-950',
-    },
-    {
       id: 'accounting',
       href: '/comptabilite',
       label: 'Comptabilité',

@@ -48,6 +48,7 @@ export default function Transactions() {
   const [detectedOperator, setDetectedOperator] = useState(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [accountError, setAccountError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   // Détection automatique locale de l'opérateur
   useEffect(() => {

@@ -134,18 +134,24 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const storedUser = localStorage.getItem('agrix_user');
     const storedToken = localStorage.getItem('agrix_token');
-    if (storedUser && storedToken) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        client.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        loadCoops();
-      } catch {
-        localStorage.removeItem('agrix_user');
-        localStorage.removeItem('agrix_token');
+    
+    const init = async () => {
+      if (storedUser && storedToken) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          client.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+          await loadCoops();
+        } catch (e) {
+          console.error("Auth init error:", e);
+          localStorage.removeItem('agrix_user');
+          localStorage.removeItem('agrix_token');
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    init();
   }, [loadCoops]);
 
   const setCurrentCoop = (coop) => {

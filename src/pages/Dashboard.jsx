@@ -140,6 +140,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (!socket || !currentCoop?._id) return;
 
+    // Initial state
+    setSocketConnected(socket.connected);
+
+    const onConnect = () => setSocketConnected(true);
+    const onDisconnect = () => setSocketConnected(false);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
     const handleStatsUpdate = (payload) => {
       setStats((prev) => prev ? { ...prev, ...payload } : prev);
       if (payload.newTransaction) {
@@ -150,6 +159,8 @@ export default function Dashboard() {
     socket.on('stats_update', handleStatsUpdate);
 
     return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
       socket.off('stats_update', handleStatsUpdate);
     };
   }, [socket, currentCoop?._id]);
