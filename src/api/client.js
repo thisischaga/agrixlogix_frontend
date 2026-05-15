@@ -2,7 +2,9 @@ import axios from 'axios';
 
 const baseURL =
   import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 
-  'http://localhost:4000';
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:4000'
+    : 'https://mbh-backend.onrender.com');
 
 const client = axios.create({
   baseURL,
