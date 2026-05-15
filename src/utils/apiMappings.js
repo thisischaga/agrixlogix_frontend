@@ -24,5 +24,10 @@ export function mapTransaction(tx) {
     bloc: tx.blockNumber ?? '—',
     date: tx.createdAt ?? tx.date,
     statut: tx.status ?? '—',
+    // Informations sur le moyen de paiement
+    accountType: tx.accountType ?? '',          // 'mobile' | 'bancaire' | ''
+    paymentMethod: tx.paymentMethod ?? '',      // MTN / Moov / Flooz / T-Money / Virement / FedaPay…
+    accountNumber: tx.accountNumber ?? '',      // Numéro téléphone ou compte bancaire
+    submittedBy: tx.submittedBy ?? '',
   };
 }

@@ -1,7 +1,7 @@
 // src/pages/Transactions.jsx
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Search, Filter, Download, RefreshCw, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { Search, Filter, Download, RefreshCw, ChevronLeft, ChevronRight, Plus, X, Smartphone, Landmark, CreditCard } from 'lucide-react';
 
 import TransactionsTable from '../components/tables/TransactionsTable';
 import client from '../api/client';
@@ -11,6 +11,10 @@ import { mapTransaction } from '../utils/apiMappings';
 const CATEGORIES = ['Toutes', 'Vente', 'Équipement', 'Cotisation', 'Subvention', 'Transport', 'Fonctionnement'];
 const TYPES      = ['Tous', 'credit', 'debit'];
 const PAGE_SIZE  = 6;
+
+// Moyens de paiement disponibles selon le type de compte
+const MOBILE_OPERATORS  = ['MTN', 'Moov', 'Flooz', 'T-Money'];
+const BANKING_OPERATORS = ['Virement', 'Espèces', 'Chèque', 'Autre'];
 
 function apiError(err) {
   return err?.response?.data?.error || err?.message || 'Une erreur est survenue.';
@@ -32,7 +36,27 @@ export default function Transactions() {
     amount: '',
     type: 'in',
     category: 'Cotisation',
+    // Moyen de paiement
+    accountType: '',       // '' | 'mobile' | 'bancaire'
+    paymentMethod: '',     // MTN / Moov / Flooz / T-Money / Virement ...
+    accountNumber: '',     // numéro tel ou compte bancaire
   });
+
+  // Erreur de validation du numéro de compte
+  const [accountError, setAccountError] = useState('');
+
+  /** Valide le numéro de compte selon le type choisi */
+  function validateAccountNumber(num, type) {
+    if (!num) return '';
+    if (type === 'mobile') {
+      const clean = num.replace(/[\s-]/g, '');
+      if (!/^\d{7,15}$/.test(clean)) return 'Numéro Mobile Money invalide (7 à 15 chiffres)';
+    }
+    if (type === 'bancaire') {
+      if (num.trim().length < 5) return 'Numéro de compte bancaire invalide (min. 5 caractères)';
+    }
+    return '';
+  }
 
   const loadTransactions = useCallback(async () => {
     if (!currentCoop?._id) return;
@@ -88,6 +112,19 @@ export default function Transactions() {
       showToast('Titre et montant valides requis.');
       return;
     }
+
+    // Validation moyen de paiement
+    if (newTx.accountType === 'mobile') {
+      if (!newTx.paymentMethod) { showToast("Sélectionnez l'opérateur Mobile Money."); return; }
+      const err = validateAccountNumber(newTx.accountNumber, 'mobile');
+      if (!newTx.accountNumber || err) { showToast(err || 'Numéro de téléphone requis.'); return; }
+    }
+    if (newTx.accountType === 'bancaire') {
+      if (!newTx.paymentMethod) { showToast('Sélectionnez le mode bancaire.'); return; }
+      const err = validateAccountNumber(newTx.accountNumber, 'bancaire');
+      if (!newTx.accountNumber || err) { showToast(err || 'Numéro de compte requis.'); return; }
+    }
+
     setSaving(true);
     try {
       await client.post(`/cooperatives/${currentCoop._id}/transactions`, {
@@ -95,10 +132,14 @@ export default function Transactions() {
         amount,
         type: newTx.type,
         category: newTx.category,
+        accountType:   newTx.accountType   || undefined,
+        paymentMethod: newTx.paymentMethod || undefined,
+        accountNumber: newTx.accountNumber ? newTx.accountNumber.replace(/[\s-]/g, '') : undefined,
       });
       showToast('Transaction enregistrée ✓');
       setShowModal(false);
-      setNewTx({ title: '', amount: '', type: 'in', category: newTx.category });
+      setNewTx({ title: '', amount: '', type: 'in', category: newTx.category, accountType: '', paymentMethod: '', accountNumber: '' });
+      setAccountError('');
       await loadTransactions();
       setPage(1);
     } catch (err) {
@@ -130,10 +171,11 @@ export default function Transactions() {
 
   const handleExport = () => {
     const csv = [
-      ['ID', 'Type', 'Catégorie', 'Label', 'Hash', 'Date', 'Montant', 'Statut'],
+      ['ID', 'Type', 'Catégorie', 'Label', 'Moyen', 'Compte', 'Hash', 'Date', 'Montant', 'Statut'],
       ...filtered.map((tx) => [
-        tx.id, tx.type, tx.categorie, tx.label, tx.hash,
-        tx.date, tx.montant, tx.bloc,
+        tx.id, tx.type, tx.categorie, tx.label,
+        tx.paymentMethod || '', tx.accountNumber || '',
+        tx.hash, tx.date, tx.montant, tx.statut,
       ]),
     ].map((r) => r.join(',')).join('\n');
 
@@ -326,11 +368,111 @@ export default function Transactions() {
                   ))}
                 </select>
               </div>
+              {/* ── Section Moyen de paiement ── */}
+              <div className="border border-slate-100 rounded-2xl p-4 flex flex-col gap-4 bg-slate-50/60">
+                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Moyen de paiement</p>
+
+                {/* Type de compte */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setNewTx(s => ({ ...s, accountType: 'mobile', paymentMethod: '', accountNumber: '' }))}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all cursor-pointer text-xs font-bold ${
+                      newTx.accountType === 'mobile'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-green-300'
+                    }`}
+                  >
+                    <Smartphone size={18} />
+                    Mobile Money
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNewTx(s => ({ ...s, accountType: 'bancaire', paymentMethod: '', accountNumber: '' }))}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 transition-all cursor-pointer text-xs font-bold ${
+                      newTx.accountType === 'bancaire'
+                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        : 'border-slate-200 bg-white text-slate-500 hover:border-blue-300'
+                    }`}
+                  >
+                    <Landmark size={18} />
+                    Bancaire
+                  </button>
+                </div>
+
+                {/* Opérateur / Mode */}
+                {newTx.accountType && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                      {newTx.accountType === 'mobile' ? 'Opérateur' : 'Mode'}
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(newTx.accountType === 'mobile' ? MOBILE_OPERATORS : BANKING_OPERATORS).map(op => (
+                        <button
+                          key={op}
+                          type="button"
+                          onClick={() => setNewTx(s => ({ ...s, paymentMethod: op }))}
+                          className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                            newTx.paymentMethod === op
+                              ? newTx.accountType === 'mobile'
+                                ? 'border-green-500 bg-green-500 text-white'
+                                : 'border-blue-500 bg-blue-500 text-white'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
+                          }`}
+                        >
+                          {op}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Numéro de compte */}
+                {newTx.accountType && (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                      {newTx.accountType === 'mobile' ? 'Numéro de téléphone' : 'Numéro de compte'}
+                    </label>
+                    <div className="relative">
+                      {newTx.accountType === 'mobile'
+                        ? <Smartphone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        : <CreditCard size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      }
+                      <input
+                        className={`input pl-9 font-mono ${
+                          accountError ? 'border-red-400 focus:border-red-500 bg-red-50' : ''
+                        }`}
+                        placeholder={newTx.accountType === 'mobile' ? 'Ex : 90 12 34 56' : 'Ex : TG53 AG12 3456 7890'}
+                        value={newTx.accountNumber}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewTx(s => ({ ...s, accountNumber: val }));
+                          setAccountError(validateAccountNumber(val, newTx.accountType));
+                        }}
+                        inputMode={newTx.accountType === 'mobile' ? 'numeric' : 'text'}
+                      />
+                    </div>
+                    {accountError && (
+                      <p className="text-xs text-red-500 mt-1 font-medium">{accountError}</p>
+                    )}
+                    {!accountError && newTx.accountNumber && (
+                      <p className="text-xs text-green-600 mt-1 font-medium">✓ Numéro valide</p>
+                    )}
+                  </div>
+                )}
+
+                {!newTx.accountType && (
+                  <p className="text-[11px] text-slate-400 text-center italic">
+                    Optionnel — sélectionnez un type pour renseigner le moyen de paiement
+                  </p>
+                )}
+              </div>
+
               <div className="flex gap-3 justify-end pt-2">
                 <button type="button" className="btn-outline" onClick={() => setShowModal(false)}>
                   Annuler
                 </button>
-                <button type="submit" className="btn-primary disabled:opacity-50" disabled={saving}>
+                <button type="submit" className="btn-primary disabled:opacity-50" disabled={saving || !!accountError}>
                   {saving ? 'Envoi…' : 'Enregistrer'}
                 </button>
               </div>

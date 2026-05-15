@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 import {
   TrendingUp, TrendingDown, Wallet, PiggyBank, RefreshCw,
-  Download, BookOpen, BarChart3, Tag, Zap, Calendar, Hash
+  Download, BookOpen, BarChart3, Tag, Zap, Calendar, Hash,
+  Smartphone, Landmark
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
@@ -23,6 +24,19 @@ function fmtShort(n) {
 function fmtDate(d) {
   if (!d) return '—';
   return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+/** Badge couleur selon moyen de paiement */
+function paymentColor(method) {
+  const m = (method || '').toLowerCase();
+  if (m === 'mtn')      return 'bg-yellow-100 text-yellow-800';
+  if (m === 'moov')     return 'bg-blue-100 text-blue-800';
+  if (m === 'flooz')    return 'bg-orange-100 text-orange-800';
+  if (m === 't-money')  return 'bg-red-100 text-red-700';
+  if (m === 'fedapay')  return 'bg-violet-100 text-violet-700';
+  if (m === 'virement') return 'bg-teal-100 text-teal-800';
+  if (m === 'espèces' || m === 'especes') return 'bg-green-100 text-green-700';
+  return 'bg-slate-100 text-slate-500';
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -102,9 +116,10 @@ export default function Comptabilite() {
   // Export CSV journal
   const exportCSV = () => {
     if (!data?.journal) return;
-    const header = ['Date','Libellé','Catégorie','Source','Débit','Crédit','Solde après','Statut','Hash'];
+    const header = ['Date','Libellé','Catégorie','Source','Moyen','Compte','Débit','Crédit','Solde après','Statut','Hash'];
     const rows = journalAvecSoldes.map(e => [
       fmtDate(e.date), e.libelle, e.categorie, e.source,
+      e.paymentMethod || '', e.accountNumber || '',
       e.debit || '', e.credit || '', e.soldeApres,
       e.statut, e.txHash || ''
     ]);
@@ -377,6 +392,7 @@ export default function Comptabilite() {
                   <th className="text-left py-3 pr-4">Date</th>
                   <th className="text-left py-3 pr-4">Libellé</th>
                   <th className="text-left py-3 pr-4">Catégorie</th>
+                  <th className="text-left py-3 pr-4">Moyen / Compte</th>
                   <th className="text-left py-3 pr-4">Source</th>
                   <th className="text-right py-3 pr-4">Débit</th>
                   <th className="text-right py-3 pr-4">Crédit</th>
@@ -395,6 +411,27 @@ export default function Comptabilite() {
                       <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-semibold text-[10px]">
                         {e.categorie}
                       </span>
+                    </td>
+                    {/* Moyen de paiement + numéro de compte */}
+                    <td className="py-3 pr-4">
+                      {e.paymentMethod ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md w-fit ${paymentColor(e.paymentMethod)}`}>
+                            {e.accountType === 'mobile'   && <Smartphone size={8} />}
+                            {e.accountType === 'bancaire' && <Landmark size={8} />}
+                            {e.paymentMethod}
+                          </span>
+                          {e.accountNumber && (
+                            <span className="text-[9px] font-mono text-slate-400 pl-0.5">
+                              {e.accountType === 'mobile'
+                                ? e.accountNumber.replace(/(\d{2})(?=\d)/g, '$1 ').trim()
+                                : e.accountNumber}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-200">—</span>
+                      )}
                     </td>
                     <td className="py-3 pr-4">
                       {e.fedapayId ? (
@@ -427,7 +464,7 @@ export default function Comptabilite() {
                   </tr>
                 ))}
                 {journalAvecSoldes.length === 0 && (
-                  <tr><td colSpan={7} className="py-12 text-center text-slate-400 italic">Aucune écriture dans le journal</td></tr>
+                  <tr><td colSpan={8} className="py-12 text-center text-slate-400 italic">Aucune écriture dans le journal</td></tr>
                 )}
               </tbody>
             </table>
