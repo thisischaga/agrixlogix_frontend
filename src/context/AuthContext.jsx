@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import client, { getSocketOrigin } from '../api/client';
+import LoadingScreen from '../components/LoadingScreen';
 
 
 const AuthContext = createContext();
@@ -201,10 +202,9 @@ export const AuthProvider = ({ children }) => {
         unreadForumCount,
         setUnreadForumCount,
         notifications
-
       }}
     >
-      {children}
+      {loading ? <LoadingScreen /> : children}
     </AuthContext.Provider>
   );
 };
