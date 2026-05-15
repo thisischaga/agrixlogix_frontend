@@ -398,7 +398,7 @@ export default function Dashboard() {
         >
           <div className="flex justify-between items-start mb-6">
             <div>
-              <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.1em] mb-1">Mon Épargne / Solde</p>
+              <p className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.1em] mb-1">Solde Théorique (Cotisations)</p>
               <h3 className="font-display text-3xl font-bold text-white">
                 {loading ? '—' : formatCurrency(userBalance)}
               </h3>
@@ -408,7 +408,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] text-blue-100 font-medium">Votre contribution totale</span>
+            <span className="text-[11px] text-blue-100 font-medium">Cumul total de vos cotisations</span>
           </div>
           <div className="absolute -right-4 -bottom-4 opacity-[0.1] text-white">
             <TrendingUp size={120} />

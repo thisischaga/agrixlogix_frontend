@@ -14,7 +14,7 @@ export default function QuickActions({ onContribute, onTransfer }) {
       iconBg: 'bg-green-200',
       text: 'text-green-950',
     },
-    {
+    /* {
       id: 'transfer',
       onClick: onTransfer,
       label: 'Transférer',
@@ -23,7 +23,7 @@ export default function QuickActions({ onContribute, onTransfer }) {
       bg: 'bg-emerald-50/90',
       iconBg: 'bg-emerald-200',
       text: 'text-emerald-950',
-    },
+    }, */
     {
       id: 'withdraw',
       href: '/transactions',
