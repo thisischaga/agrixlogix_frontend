@@ -52,7 +52,7 @@ export default function Register() {
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-10 text-center">
           <BrandLogo variant="hero" />
-          <h1 className="text-[32px] font-[800] text-[#0F172A] tracking-tighter mt-4 leading-none">AgriLogix</h1>
+          <h1 className="text-[32px] font-[800] text-[#0F172A] tracking-tighter mt-4 leading-none">agrilogix</h1>
           <p className="text-[13px] text-[#64748B] font-medium mt-2">Gérez votre coopérative du bout des doigts</p>
         </div>
 
@@ -132,7 +132,7 @@ export default function Register() {
                 className="mt-1 w-4 h-4 rounded border-slate-300 text-[#1B6B3A] focus:ring-[#1B6B3A] cursor-pointer"
               />
               <label htmlFor="terms-check" className="text-[12px] text-[#64748B] leading-snug font-medium select-none cursor-pointer">
-                J'accepte les <Link to="/terms" className="text-[#1B6B3A] font-bold hover:underline">Conditions Générales d'Utilisation</Link> et la <Link to="/privacy" className="text-[#1B6B3A] font-bold hover:underline">Politique de Confidentialité</Link> d'AgriLogix.
+                J'accepte les <Link to="/terms" className="text-[#1B6B3A] font-bold hover:underline">Conditions Générales d'Utilisation</Link> et la <Link to="/privacy" className="text-[#1B6B3A] font-bold hover:underline">Politique de Confidentialité</Link> d'agrilogix.
               </label>
             </div>
 

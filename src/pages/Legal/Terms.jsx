@@ -31,7 +31,7 @@ export default function Terms() {
               1. Acceptation des Conditions
             </h2>
             <p>
-              En accédant et en utilisant la plateforme AgriLogix, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation. AgriLogix est une solution de gestion pour les coopératives agricoles visant la transparence financière et la sécurité des données via la technologie blockchain.
+              En accédant et en utilisant la plateforme agrilogix, vous acceptez d'être lié par les présentes Conditions Générales d'Utilisation. agrilogix est une solution de gestion pour les coopératives agricoles visant la transparence financière et la sécurité des données via la technologie blockchain.
             </p>
           </section>
 
@@ -41,7 +41,7 @@ export default function Terms() {
               2. Description du Service
             </h2>
             <p>
-              AgriLogix fournit des outils de suivi des cotisations, de gestion des membres, de vote électronique et de comptabilité transparente. Certaines transactions sont ancrées sur une blockchain publique pour garantir leur immutabilité.
+              agrilogix fournit des outils de suivi des cotisations, de gestion des membres, de vote électronique et de comptabilité transparente. Certaines transactions sont ancrées sur une blockchain publique pour garantir leur immutabilité.
             </p>
           </section>
 
@@ -63,7 +63,7 @@ export default function Terms() {
               4. Sécurité et Blockchain
             </h2>
             <p>
-              L'ancrage blockchain assure que les archives financières ne peuvent être altérées. En utilisant AgriLogix, vous reconnaissez que les hachages de transactions rendus publics sont définitifs et ne peuvent être supprimés.
+              L'ancrage blockchain assure que les archives financières ne peuvent être altérées. En utilisant agrilogix, vous reconnaissez que les hachages de transactions rendus publics sont définitifs et ne peuvent être supprimés.
             </p>
           </section>
 
@@ -73,7 +73,7 @@ export default function Terms() {
               5. Limitation de Responsabilité
             </h2>
             <p>
-              AgriLogix s'efforce de maintenir une disponibilité maximale du service mais ne peut être tenu responsable des interruptions dues à des facteurs externes (pannes réseau, maintenance, bugs tiers).
+              agrilogix s'efforce de maintenir une disponibilité maximale du service mais ne peut être tenu responsable des interruptions dues à des facteurs externes (pannes réseau, maintenance, bugs tiers).
             </p>
           </section>
 
@@ -84,7 +84,7 @@ export default function Terms() {
             >
               Retour
             </button>
-            <p className="text-sm text-slate-400 italic">AgriLogix © 2026 - Tous droits réservés.</p>
+            <p className="text-sm text-slate-400 italic">agrilogix © 2026 - Tous droits réservés.</p>
           </div>
         </div>
       </motion.div>

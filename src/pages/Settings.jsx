@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, Link } from 'react-router-dom';
 import { 
   LogOut, 
   User as UserIcon, 
@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Save,
   Loader2,
-  Trash2
+  Trash2,
+  FileText,
+  AlignLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { validatePhone } from '../utils/phoneUtils';
@@ -100,6 +102,7 @@ export default function Settings() {
     { id: 'security', label: 'Sécurité', icon: Lock },
     { id: 'coops', label: 'Mes Coopératives', icon: Building2 },
     { id: 'preferences', label: 'Préférences', icon: Bell },
+    { id: 'legal', label: 'Légal & Conformité', icon: ShieldCheck },
   ];
 
   return (
@@ -361,7 +364,7 @@ export default function Settings() {
             <div className="p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="mb-10">
                 <h3 className="font-display font-bold text-2xl text-slate-800 mb-2">Préférences</h3>
-                <p className="text-sm text-slate-400">Personnalisez votre expérience AgriLogix.</p>
+                <p className="text-sm text-slate-400">Personnalisez votre expérience agrilogix.</p>
               </div>
 
               <div className="space-y-6">
@@ -381,6 +384,57 @@ export default function Settings() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'legal' && (
+            <div className="p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mb-10">
+                <h3 className="font-display font-bold text-2xl text-slate-800 mb-2">Légal & Conformité</h3>
+                <p className="text-sm text-slate-400">Consultez les documents légaux et les politiques de protection des données.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Link 
+                  to="/terms"
+                  className="flex flex-col p-6 bg-slate-50 hover:bg-slate-100 rounded-[28px] border border-slate-100 transition-all group"
+                >
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-green-600 transition-colors mb-4 shadow-sm">
+                    <AlignLeft size={24} />
+                  </div>
+                  <h4 className="font-bold text-slate-800 mb-1">Conditions Générales</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">Règles d'utilisation de la plateforme et responsabilités des membres.</p>
+                  <div className="mt-4 flex items-center gap-2 text-green-600 text-[10px] font-bold uppercase tracking-widest">
+                    <span>Voir le document</span>
+                    <ChevronRight size={12} />
+                  </div>
+                </Link>
+
+                <Link 
+                  to="/privacy"
+                  className="flex flex-col p-6 bg-slate-50 hover:bg-slate-100 rounded-[28px] border border-slate-100 transition-all group"
+                >
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-emerald-600 transition-colors mb-4 shadow-sm">
+                    <ShieldCheck size={24} />
+                  </div>
+                  <h4 className="font-bold text-slate-800 mb-1">Politique de Confidentialité</h4>
+                  <p className="text-xs text-slate-400 leading-relaxed">Comment nous protégeons vos données personnelles et financières.</p>
+                  <div className="mt-4 flex items-center gap-2 text-emerald-600 text-[10px] font-bold uppercase tracking-widest">
+                    <span>Voir le document</span>
+                    <ChevronRight size={12} />
+                  </div>
+                </Link>
+              </div>
+
+              <div className="mt-10 p-6 bg-amber-50 rounded-[24px] border border-amber-100 flex items-start gap-4">
+                <FileText className="text-amber-600 shrink-0" size={20} />
+                <div>
+                  <p className="text-sm font-bold text-amber-900 mb-1">Ancrage Blockchain</p>
+                  <p className="text-xs text-amber-700 leading-relaxed">
+                    Les hachages de transactions enregistrés sur la blockchain publique sont immuables et font partie intégrante de nos archives de conformité.
+                  </p>
+                </div>
               </div>
             </div>
           )}

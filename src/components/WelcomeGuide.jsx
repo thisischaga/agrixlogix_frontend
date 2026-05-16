@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 const SLIDES = [
   {
     id: 1,
-    title: 'Bienvenue sur AgriLogix',
+    title: 'Bienvenue sur agrilogix',
     subtitle: 'La révolution numérique agricole',
     description: 'Pilotez votre coopérative avec une précision inégalée. Une plateforme conçue pour la transparence et la croissance de vos membres.',
     icon: <Sprout size={48} />,

@@ -56,7 +56,7 @@ export default function Privacy() {
               3. Partage des Données
             </h2>
             <p>
-              AgriLogix ne vend jamais vos données à des tiers. Les hachages de transactions (données anonymisées) sont partagés sur la blockchain publique pour garantir l'auditabilité financière. Seuls les membres autorisés de votre propre coopérative ont accès à vos détails financiers complets.
+              agrilogix ne vend jamais vos données à des tiers. Les hachages de transactions (données anonymisées) sont partagés sur la blockchain publique pour garantir l'auditabilité financière. Seuls les membres autorisés de votre propre coopérative ont accès à vos détails financiers complets.
             </p>
           </section>
 
@@ -87,7 +87,7 @@ export default function Privacy() {
             >
               Retour
             </button>
-            <p className="text-sm text-slate-400 italic">AgriLogix © 2026 - Protection des données.</p>
+            <p className="text-sm text-slate-400 italic">agrilogix © 2026 - Protection des données.</p>
           </div>
         </div>
       </motion.div>

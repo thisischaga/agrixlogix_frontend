@@ -45,7 +45,7 @@ export default function Sidebar({ mobileOpen = false, onNavigate }) {
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/10">
         <BrandLogo variant="sidebar" />
         <div className="min-w-0">
-          <p className="font-display font-bold text-white text-lg leading-tight tracking-tight">AgriLogix</p>
+          <p className="font-display font-bold text-white text-lg leading-tight tracking-tight">agrilogix</p>
           <p className="text-green-300/90 text-[10px] font-medium leading-snug mt-0.5">
             Gestion coopérative décentralisée
           </p>

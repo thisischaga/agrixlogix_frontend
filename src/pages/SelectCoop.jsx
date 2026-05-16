@@ -62,7 +62,7 @@ export default function SelectCoop() {
       <div className="w-full max-w-2xl">
         <div className="flex justify-between items-center mb-10">
           <div>
-            <h1 className="font-display font-bold text-3xl text-slate-800">AgriLogix</h1>
+            <h1 className="font-display font-bold text-3xl text-slate-800">agrilogix</h1>
             <p className="text-slate-500 font-medium">Choisissez ou rejoignez une coopérative</p>
           </div>
           <button 

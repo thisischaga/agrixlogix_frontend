@@ -60,7 +60,7 @@ export const startTour = (onComplete) => {
         element: '#tour-audit', 
         popover: { 
           title: 'Certification Audit', 
-          description: 'Vérifiez par vous-même l\'intégrité mathématique de vos données grâce au nœud blockchain AgriLogix.', 
+          description: 'Vérifiez par vous-même l\'intégrité mathématique de vos données grâce au nœud blockchain agrilogix.', 
           side: "top", 
           align: 'start' 
         } 

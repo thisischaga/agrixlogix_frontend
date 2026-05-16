@@ -41,7 +41,7 @@ export default function Login() {
         {/* Logo Section - Mobile Style */}
         <div className="flex flex-col items-center mb-10 text-center">
           <BrandLogo variant="hero" />
-          <h1 className="text-[32px] font-[800] text-[#0F172A] tracking-tighter mt-4 leading-none">AgriLogix</h1>
+          <h1 className="text-[32px] font-[800] text-[#0F172A] tracking-tighter mt-4 leading-none">agrilogix</h1>
           <p className="text-[13px] text-[#64748B] font-medium mt-2 leading-relaxed">
             Gérez votre coopérative du bout des doigts
           </p>
