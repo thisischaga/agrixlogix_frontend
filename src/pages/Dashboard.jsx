@@ -409,8 +409,13 @@ export default function Dashboard() {
               <Plus size={16} />
             </Link>
           </div>
-          <button className="p-2.5 rounded-xl bg-white border border-slate-100 text-slate-400 hover:text-green-600 transition-all shadow-sm">
-            <Bell size={18} />
+          <button
+            type="button"
+            id="tour-notifications"
+            onClick={() => setNotifOpen(true)}
+            className="h-9 w-9 shrink-0 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-green-600 transition-all relative border-none cursor-pointer"
+          >
+            <Bell size={16} />
           </button>
         </div>
       </div>
@@ -430,6 +435,7 @@ export default function Dashboard() {
           <>
             {/* Treasury Card */}
             <motion.div
+              id="tour-treasury"
               whileHover={{ y: -4 }}
               className="card bg-white border-none shadow-xl shadow-green-900/5 p-6 relative overflow-hidden"
             >
@@ -459,6 +465,7 @@ export default function Dashboard() {
 
             {/* Personal Balance Card */}
             <motion.div
+              id="tour-personal"
               whileHover={{ y: -4 }}
               className="card bg-gradient-to-br from-blue-600 to-indigo-700 border-none shadow-xl shadow-blue-900/20 p-6 relative overflow-hidden"
             >
@@ -508,7 +515,7 @@ export default function Dashboard() {
 
       {/* Audit & Charts Section */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-        <div className="xl:col-span-4">
+        <div className="xl:col-span-4" id="tour-audit">
           <AuditCard
             dernierBloc={stats?.blockchain?.lastBlock ?? '—'}
             validateursLibelle={stats?.blockchain?.validators ?? '—'}
@@ -522,7 +529,7 @@ export default function Dashboard() {
             isAdmin={currentCoop?.adminId === user?._id || user?.role === 'Admin' || user?.role === 'Président'}
           />
         </div>
-        <div className="xl:col-span-8">
+        <div className="xl:col-span-8" id="tour-actions">
           <QuickActions 
             onContribute={() => setIsContributionOpen(true)} 
             onTransfer={() => setIsTransferOpen(true)} 

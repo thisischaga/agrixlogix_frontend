@@ -8,10 +8,16 @@ export const startTour = (onComplete) => {
     prevBtnText: '&larr; Précédent',
     doneBtnText: 'Terminer',
     steps: [
-      { element: '#tour-transactions', popover: { title: 'Transactions', description: 'Enregistrez et consultez toutes les entrées et sorties de votre coopérative ici.', side: "right", align: 'start' } },
-      { element: '#tour-compta', popover: { title: 'Comptabilité', description: 'Générez des rapports et consultez le bilan global de la trésorerie.', side: "right", align: 'start' } },
-      { element: '#tour-coop-selector', popover: { title: 'Changer de Coopérative', description: 'Si vous appartenez à plusieurs coopératives, vous pouvez basculer entre elles ici.', side: "bottom", align: 'start' } },
-      { element: '#tour-add-coop', popover: { title: 'Nouvelle Coopérative', description: 'Créez une nouvelle coopérative ou rejoignez-en une avec un code.', side: "bottom", align: 'start' } },
+      { element: '#tour-dashboard', popover: { title: 'Tableau de bord', description: 'Votre centre de contrôle avec les statistiques clés de la coopérative.', side: "right", align: 'start' } },
+      { element: '#tour-treasury', popover: { title: 'Trésorerie Totale', description: 'Consultez le solde global de la coopérative et son évolution ce mois-ci.', side: "bottom", align: 'start' } },
+      { element: '#tour-personal', popover: { title: 'Solde Personnel', description: 'Voici le montant total de vos propres cotisations versées à la coopérative.', side: "bottom", align: 'start' } },
+      { element: '#tour-transactions', popover: { title: 'Transactions', description: 'Enregistrez vos entrées et sorties. Tout est ancré dans la Blockchain.', side: "right", align: 'start' } },
+      { element: '#tour-comptabilite', popover: { title: 'Comptabilité', description: 'Générez des rapports financiers complets et le journal de caisse.', side: "right", align: 'start' } },
+      { element: '#tour-audit', popover: { title: 'Audit Blockchain', description: 'Vérifiez l\'intégrité des données et exportez des rapports d\'audit certifiés.', side: "top", align: 'start' } },
+      { element: '#tour-actions', popover: { title: 'Actions Rapides', description: 'Cotisez ou effectuez des transferts en quelques clics.', side: "top", align: 'start' } },
+      { element: '#tour-coop-selector', popover: { title: 'Sélecteur de Coop', description: 'Basculez facilement entre vos différentes coopératives ici.', side: "bottom", align: 'start' } },
+      { element: '#tour-notifications', popover: { title: 'Notifications', description: 'Restez informé des nouveaux votes, messages et transactions.', side: "bottom", align: 'end' } },
+      { element: '#tour-profile', popover: { title: 'Votre Profil', description: 'Gérez vos informations personnelles et vos préférences de compte.', side: "bottom", align: 'end' } },
     ],
     onDestroyStarted: () => {
       driverObj.destroy();

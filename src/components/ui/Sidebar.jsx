@@ -75,11 +75,6 @@ export default function Sidebar({ mobileOpen = false, onNavigate }) {
               <div className="relative flex items-center gap-3 w-full">
                 <Icon size={17} />
                 <span className="flex-1">{label}</span>
-                {label === 'Forum' && unreadForumCount > 0 && (
-                  <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-emerald-500/20 animate-pulse">
-                    {unreadForumCount > 99 ? '99+' : unreadForumCount}
-                  </span>
-                )}
               </div>
             </NavLink>
           ))}

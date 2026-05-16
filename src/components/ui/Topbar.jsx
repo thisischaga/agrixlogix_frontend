@@ -62,6 +62,7 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
 
           <button
             type="button"
+            id="tour-notifications"
             onClick={() => setNotifOpen(true)}
             className="h-9 w-9 shrink-0 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-green-600 transition-all relative border-none cursor-pointer"
           >
@@ -75,7 +76,7 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
           
           <NotificationPanel isOpen={notifOpen} onClose={() => setNotifOpen(false)} />
 
-          <div className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-xl bg-green-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-lg shadow-green-900/20">
+          <div id="tour-profile" className="h-8 w-8 sm:h-9 sm:w-9 shrink-0 rounded-xl bg-green-600 flex items-center justify-center text-white text-[10px] sm:text-xs font-bold shadow-lg shadow-green-900/20">
             {getInitials(user?.name)}
           </div>
         </div>
