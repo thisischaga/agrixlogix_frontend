@@ -1,9 +1,10 @@
-import { Bell, Menu, RefreshCw } from 'lucide-react';
+import { Bell, Menu, HelpCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
 import BrandLogo from '../brand/BrandLogo';
 import NotificationPanel from '../modals/NotificationPanel';
+import { startTour } from '../../utils/tourUtils';
 
 /**
  * Barre supérieure (style tableau de bord coop : accueil, réseau, profil).
@@ -49,6 +50,15 @@ export default function Topbar({ title, subtitle, onMenuClick }) {
             <span className="pulse-dot w-1.5 h-1.5 shrink-0" />
             Réseau Actif
           </div>
+
+          <button
+            type="button"
+            onClick={() => startTour()}
+            className="h-9 w-9 shrink-0 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 hover:text-green-600 transition-all border-none cursor-pointer"
+            title="Relancer le guide"
+          >
+            <HelpCircle size={16} />
+          </button>
 
           <button
             type="button"
