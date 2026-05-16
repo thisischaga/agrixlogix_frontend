@@ -168,7 +168,10 @@ export default function Dashboard() {
 
   const balance = stats?.balance ?? 0;
   const userBalance = stats?.userBalance ?? 0;
-  const growth = Number(stats?.growthRate ?? 0);
+  const growthRate = stats?.growthRate;
+  const monthEarnings = stats?.monthEarnings ?? 0;
+  const showGrowth = growthRate !== null && growthRate !== undefined;
+  const trendValue = showGrowth ? Number(growthRate) : Number(monthEarnings);
   const membersCount = stats?.membersCount ?? 0;
   const activeVotes = stats?.activeVotes ?? 0;
   const recentTx = transactions.slice(0, 5);
@@ -440,11 +443,12 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${growth >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                  {growth >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                  {growth >= 0 ? '+' : ''}{growth.toFixed(1)}%
+                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-lg ${trendValue >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {trendValue >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                  {trendValue >= 0 ? '+' : ''}
+                  {showGrowth ? `${trendValue.toFixed(1)}%` : `${trendValue.toLocaleString('fr-FR')} F`}
                 </div>
-                <span className="text-[11px] text-slate-400 font-medium">vs mois dernier</span>
+                <span className="text-[11px] text-slate-400 font-medium">{showGrowth ? 'vs mois dernier' : 'ce mois'}</span>
               </div>
               <div className="absolute -right-4 -bottom-4 opacity-[0.03] text-green-900">
                 <Activity size={120} />
