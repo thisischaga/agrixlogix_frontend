@@ -20,13 +20,17 @@ export const AuthProvider = ({ children }) => {
 
 
   const addNotification = useCallback((notif) => {
-    setNotifications(prev => [{
-      id: Date.now(),
-      date: new Date(),
-      read: false,
-      ...notif
-    }, ...prev].slice(0, 20));
-  }, []);
+    setNotifications(prev => {
+      const nid = notif._id || notif.id;
+      if (nid && prev.some(n => (n._id || n.id) === nid)) return prev;
+      return [{
+        id: nid || Date.now(),
+        date: notif.createdAt || notif.date || new Date(),
+        read: notif.readBy?.includes(user?._id) || false,
+        ...notif
+      }, ...prev].slice(0, 20);
+    });
+  }, [user?._id]);
 
   const markAllRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
@@ -79,8 +83,18 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (currentCoop?._id) {
       loadForumStats(currentCoop._id);
+      
+      // Load notifications
+      client.get(`/cooperatives/${currentCoop._id}/notifications`)
+        .then(res => {
+          if (res.data) {
+            // Add them in reverse chronological order to maintain correct history
+            [...res.data].reverse().forEach(n => addNotification(n));
+          }
+        })
+        .catch(err => console.error('Erreur chargement notifications:', err));
     }
-  }, [currentCoop?._id, loadForumStats]);
+  }, [currentCoop?._id, loadForumStats, addNotification]);
 
   // ── Gestion globale du Socket ───────────────────────────────────
   useEffect(() => {
@@ -113,6 +127,10 @@ export const AuthProvider = ({ children }) => {
             type: payload.type || 'info'
           });
         }
+      });
+
+      socket.on('new_notification', (notif) => {
+        addNotification(notif);
       });
 
       socketRef.current = socket;
