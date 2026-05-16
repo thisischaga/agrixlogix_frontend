@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sprout, Wallet, ShieldCheck, ChevronRight, Check, Play, SkipForward } from 'lucide-react';
 import { startTour } from '../utils/tourUtils';
@@ -38,11 +39,18 @@ const SLIDES = [
 ];
 
 export default function WelcomeGuide() {
-  const { user, markGuideSeen } = useAuth();
+  const { user, markGuideSeen, currentCoop } = useAuth();
+  const location = useLocation();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [tourRunning, setTourRunning] = useState(false);
 
+  // Conditions for showing the guide:
+  // 1. User hasn't seen it yet
+  // 2. Not already running
+  // 3. User is on the dashboard (root path)
+  // 4. User has an active cooperative
   if (user?.hasSeenGuide || tourRunning) return null;
+  if (location.pathname !== '/' || !currentCoop?._id) return null;
 
   const nextSlide = () => {
     if (currentSlide < SLIDES.length - 1) {
