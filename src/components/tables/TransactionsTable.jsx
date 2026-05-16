@@ -32,8 +32,9 @@ function formatAccountNumber(num, type) {
  * @param {String}   userRole   - rôle de l'utilisateur courant (pour validation)
  * @param {Function} onValidate - callback au clic "Valider"
  * @param {Function} onReject   - callback au clic "Rejeter"
+ * @param {Boolean}  canApprove - si l'utilisateur peut approuver
  */
-export default function TransactionsTable({ data, onView, userRole, onValidate, onReject }) {
+export default function TransactionsTable({ data, onView, userRole, onValidate, onReject, canApprove }) {
   if (!data?.length) {
     return (
       <div className="py-16 text-center text-slate-400 text-sm">
@@ -132,7 +133,7 @@ export default function TransactionsTable({ data, onView, userRole, onValidate, 
               <td className="px-4 py-3.5">
                 <div className="flex items-center gap-1">
                   {/* Boutons Valider / Rejeter pour Président/Admin */}
-                  {(userRole === 'Président' || userRole === 'President' || userRole === 'Admin') && tx.statut === 'pending' && (
+                  {canApprove && tx.statut === 'pending' && (
                     <>
                       <button
                         className="p-1.5 rounded-lg bg-green-50 hover:bg-green-100 text-green-600 transition-colors border-none cursor-pointer"

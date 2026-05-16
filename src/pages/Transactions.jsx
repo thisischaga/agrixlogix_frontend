@@ -25,6 +25,18 @@ function apiError(err) {
 export default function Transactions() {
   const { showToast } = useOutletContext();
   const { currentCoop, user } = useAuth();
+  
+  const myRole = useMemo(() => {
+    return currentCoop?.myRole || user?.role || 'Membre';
+  }, [currentCoop?.myRole, user?.role]);
+
+  const canAdd = useMemo(() => {
+    return ['Trésorier', 'Admin'].includes(myRole);
+  }, [myRole]);
+
+  const canApprove = useMemo(() => {
+    return ['Président', 'President', 'Admin'].includes(myRole);
+  }, [myRole]);
 
   const [transactions, setTransactions] = useState([]);
   const [search, setSearch] = useState('');
@@ -252,9 +264,11 @@ export default function Transactions() {
             </div>
             
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <button type="button" className="btn-primary flex-1 sm:flex-initial h-11" onClick={() => setShowModal(true)}>
-                <Plus size={14} /> Nouvelle
-              </button>
+              {canAdd && (
+                <button type="button" className="btn-primary flex-1 sm:flex-initial h-11" onClick={() => setShowModal(true)}>
+                  <Plus size={14} /> Nouvelle
+                </button>
+              )}
               <button type="button" className="btn-outline flex-1 sm:flex-initial h-11" onClick={() => loadTransactions()}>
                 <RefreshCw size={14} /> Actualiser
               </button>
@@ -298,10 +312,11 @@ export default function Transactions() {
 
         <TransactionsTable 
           data={paginated} 
-          userRole={user?.role}
-          onView={(tx) => showToast(`Bloc ${tx.bloc} — ${tx.hash}`)} 
+          loading={loading}
           onValidate={handleValidate}
           onReject={handleReject}
+          userRole={myRole}
+          canApprove={canApprove}
         />
 
         <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
