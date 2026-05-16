@@ -189,6 +189,17 @@ export const AuthProvider = ({ children }) => {
     setCurrentCoopState(null);
   };
 
+  const markGuideSeen = async () => {
+    try {
+      await client.post('/users/guide-seen');
+      const updatedUser = { ...user, hasSeenGuide: true };
+      setUser(updatedUser);
+      localStorage.setItem('agrix_user', JSON.stringify(updatedUser));
+    } catch (err) {
+      console.error('Erreur lors de la validation du guide', err);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{ 
@@ -200,6 +211,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        markGuideSeen,
         setCurrentCoop,
         refreshCoops: loadCoops,
         addNotification,

@@ -1,5 +1,5 @@
-// src/layouts/DashboardLayout.jsx
 import { useState } from 'react';
+import WelcomeGuide from '../components/WelcomeGuide';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from '../components/ui/Sidebar';
 import Topbar from '../components/ui/Topbar';
@@ -66,6 +66,7 @@ export default function DashboardLayout() {
       </div>
 
       <Toast toast={toast} />
+      <WelcomeGuide />
     </div>
   );
 }
