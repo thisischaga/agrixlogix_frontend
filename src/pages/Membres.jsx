@@ -260,9 +260,9 @@ export default function Membres() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {loading ? (
-                  <tr><td colSpan="3" className="py-24 text-center italic text-slate-300">Synchronisation des données...</td></tr>
+                  <tr key="loading"><td colSpan="3" className="py-24 text-center italic text-slate-300">Synchronisation des données...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan="3" className="py-24 text-center italic text-slate-300">Aucun membre ne correspond à votre recherche</td></tr>
+                  <tr key="empty"><td colSpan="3" className="py-24 text-center italic text-slate-300">Aucun membre ne correspond à votre recherche</td></tr>
                 ) : (
                   filtered.map((m, idx) => (
                     <tr key={m._id || `member-${idx}`} className="group hover:bg-green-50/20 transition-all duration-300">
