@@ -13,6 +13,7 @@ export default function Register() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [accepted, setAccepted] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,10 +29,11 @@ export default function Register() {
     if (!name.trim()) return setError('Veuillez entrer votre nom complet.');
     if (password !== confirm) return setError('Les mots de passe ne correspondent pas.');
     if (!PASSWORD_REGEX.test(password)) return setError('Mot de passe trop faible. ' + PASSWORD_HINT);
+    if (!accepted) return setError('Vous devez accepter les conditions pour continuer.');
 
     setLoading(true);
     try {
-      await register({ name: name.trim(), password });
+      await register({ name: name.trim(), password, acceptedTerms: true });
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Impossible de créer le compte.');
@@ -120,9 +122,23 @@ export default function Register() {
               {PASSWORD_HINT}
             </p>
 
+            {/* Legal Acceptance Checkbox */}
+            <div className="flex items-start gap-3 p-1">
+              <input 
+                type="checkbox" 
+                id="terms-check"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+                className="mt-1 w-4 h-4 rounded border-slate-300 text-[#1B6B3A] focus:ring-[#1B6B3A] cursor-pointer"
+              />
+              <label htmlFor="terms-check" className="text-[12px] text-[#64748B] leading-snug font-medium select-none cursor-pointer">
+                J'accepte les <Link to="/terms" className="text-[#1B6B3A] font-bold hover:underline">Conditions Générales d'Utilisation</Link> et la <Link to="/privacy" className="text-[#1B6B3A] font-bold hover:underline">Politique de Confidentialité</Link> d'AgriLogix.
+              </label>
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !accepted}
               className="h-[56px] w-full bg-[#1B6B3A] hover:bg-[#15522c] disabled:opacity-50 text-white font-[700] rounded-xl flex items-center justify-center transition-all shadow-md mt-2 border-none cursor-pointer"
             >
               {loading ? (

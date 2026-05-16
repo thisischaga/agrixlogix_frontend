@@ -12,6 +12,8 @@ import NotFound     from '../pages/NotFound';
 import AjoutCooperative from '../pages/AjoutCooperative';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import Terms from '../pages/Legal/Terms';
+import Privacy from '../pages/Legal/Privacy';
 import Comptabilite from '../pages/Comptabilite';
 import AjoutMembre from '../pages/AjoutMembre';
 
@@ -21,6 +23,8 @@ export default function AppRoutes() {
       {/* Public */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
 
       {/* Protected */}
       <Route element={<ProtectedRoute />}>

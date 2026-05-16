@@ -32,9 +32,26 @@ export const AuthProvider = ({ children }) => {
     });
   }, [user?._id]);
 
-  const markAllRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const markRead = useCallback(async (notifId) => {
+    try {
+      await client.post(`/notifications/${notifId}/read`);
+      setNotifications(prev => prev.map(n => 
+        (n._id || n.id) === notifId ? { ...n, read: true } : n
+      ));
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
   }, []);
+
+  const markAllRead = useCallback(async () => {
+    if (!currentCoop?._id) return;
+    try {
+      await client.post(`/cooperatives/${currentCoop._id}/notifications/read-all`);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Error marking all notifications as read:', err);
+    }
+  }, [currentCoop?._id]);
 
   const loadCoops = useCallback(async () => {
     try {
@@ -233,6 +250,7 @@ export const AuthProvider = ({ children }) => {
         setCurrentCoop,
         refreshCoops: loadCoops,
         addNotification,
+        markRead,
         markAllRead,
         socket: socketRef.current,
         unreadForumCount,

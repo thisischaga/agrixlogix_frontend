@@ -5,7 +5,7 @@ import { Bell, X, Check, TrendingUp, TrendingDown, Info, Calendar } from 'lucide
 import { useAuth } from '../../context/AuthContext';
 
 export default function NotificationPanel({ isOpen, onClose }) {
-  const { notifications, markAllRead } = useAuth();
+  const { notifications, markRead, markAllRead } = useAuth();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   if (typeof document === 'undefined') return null;
@@ -66,7 +66,8 @@ export default function NotificationPanel({ isOpen, onClose }) {
                   <motion.div 
                     layout
                     key={notif.id}
-                    className={`p-4 rounded-2xl border transition-all ${notif.read ? 'bg-white border-slate-100 opacity-70' : 'bg-green-50/50 border-green-100 shadow-sm'}`}
+                    onClick={() => !notif.read && markRead(notif.id || notif._id)}
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${notif.read ? 'bg-white border-slate-100 opacity-70' : 'bg-green-50/50 border-green-100 shadow-sm hover:border-green-300'}`}
                   >
                     <div className="flex gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
