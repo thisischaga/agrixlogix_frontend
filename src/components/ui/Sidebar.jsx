@@ -56,6 +56,7 @@ export default function Sidebar({ mobileOpen = false, onNavigate }) {
             <NavLink
               key={to}
               to={to}
+              id={`tour-${to.replace('/', '') || 'dashboard'}`}
               end={to === '/'}
               onClick={() => onNavigate?.()}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}

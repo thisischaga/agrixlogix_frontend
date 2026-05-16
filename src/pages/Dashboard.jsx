@@ -393,6 +393,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="flex items-center bg-white rounded-2xl border border-slate-100 shadow-sm pr-1">
             <select
+              id="tour-coop-selector"
               className="input border-none text-xs py-2 min-w-[180px] bg-transparent cursor-pointer focus:ring-0"
               value={currentCoop._id}
               onChange={(e) => setCurrentCoop(coops.find((c) => c._id === e.target.value))}
@@ -400,6 +401,7 @@ export default function Dashboard() {
               {coops.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
             </select>
             <Link 
+              id="tour-add-coop"
               to="/ajout-cooperative" 
               className="w-8 h-8 flex items-center justify-center bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all mr-1"
               title="Créer une autre coopérative"
