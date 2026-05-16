@@ -13,6 +13,7 @@ import AjoutCooperative from '../pages/AjoutCooperative';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Comptabilite from '../pages/Comptabilite';
+import AjoutMembre from '../pages/AjoutMembre';
 
 export default function AppRoutes() {
   return (
@@ -34,6 +35,7 @@ export default function AppRoutes() {
           <Route path="comptabilite" element={<Comptabilite />} />
           <Route path="settings"     element={<Settings />} />
           <Route path="ajout-cooperative" element={<AjoutCooperative />} />
+          <Route path="ajout-membre" element={<AjoutMembre />} />
         </Route>
       </Route>
 

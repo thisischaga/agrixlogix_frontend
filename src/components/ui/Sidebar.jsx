@@ -1,7 +1,7 @@
 // src/components/ui/Sidebar.jsx
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, ArrowLeftRight, Vote, Users, Settings, MessageSquare, BookOpen,
+  LayoutDashboard, ArrowLeftRight, Vote, Users, Settings, MessageSquare, BookOpen, UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials } from '../../utils/formatCurrency';
@@ -10,10 +10,11 @@ import BrandLogo from '../brand/BrandLogo';
 const navItems = [
   { to: '/', label: 'Tableau de bord', icon: LayoutDashboard },
   { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
+  { to: '/comptabilite', label: 'Comptabilité', icon: BookOpen },
+  { to: '/membres', label: 'Membres', icon: Users },
+  { to: '/ajout-membre', label: 'Ajouter membre', icon: UserPlus, adminOnly: true },
   { to: '/votes', label: 'Vote', icon: Vote },
   { to: '/forum', label: 'Forum', icon: MessageSquare },
-  { to: '/membres', label: 'Membres', icon: Users },
-  { to: '/comptabilite', label: 'Comptabilité', icon: BookOpen },
   { to: '/settings', label: 'Paramètres', icon: Settings },
 ];
 
@@ -22,6 +23,14 @@ const navItems = [
  */
 export default function Sidebar({ mobileOpen = false, onNavigate }) {
   const { user, currentCoop, unreadForumCount } = useAuth();
+
+  const canManage = (() => {
+    if (!user || !currentCoop) return false;
+    const localRole = currentCoop.myRole;
+    const isCoopAdmin = ['Président', 'President', 'Admin'].includes(localRole);
+    const isOwner = String(currentCoop.adminId?._id || currentCoop.adminId) === String(user._id);
+    return isCoopAdmin || isOwner || user.isSystemAdmin;
+  })();
 
   return (
     <aside
@@ -50,6 +59,8 @@ export default function Sidebar({ mobileOpen = false, onNavigate }) {
             if (!currentCoop?._id) {
               return ['Tableau de bord', 'Paramètres'].includes(item.label);
             }
+            // Restriction Admin
+            if (item.adminOnly && !canManage) return false;
             return true;
           })
           .map(({ to, label, icon: Icon }) => (

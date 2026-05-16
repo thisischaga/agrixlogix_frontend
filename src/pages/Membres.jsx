@@ -56,8 +56,12 @@ export default function Membres() {
 
   const canManage = useMemo(() => {
     if (!user || !currentCoop) return false;
-    const aid = currentCoop.adminId?._id ?? currentCoop.adminId;
-    return String(aid) === String(user._id) || user.role === 'Admin' || user.role === 'Président';
+    
+    const localRole = currentCoop.myRole || '';
+    const isCoopAdmin = localRole === 'Président' || localRole === 'President' || localRole === 'Admin';
+    const isOwner = currentCoop.adminId && (String(currentCoop.adminId?._id || currentCoop.adminId) === String(user._id));
+    
+    return isCoopAdmin || isOwner || !!user.isSystemAdmin;
   }, [user, currentCoop]);
 
   const loadData = useCallback(async () => {
@@ -208,8 +212,8 @@ export default function Membres() {
                 <h3 className="font-bold text-amber-900 text-sm uppercase tracking-widest">Demandes d'adhésion en attente ({pending.length})</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pending.map(m => (
-                  <div key={m._id} className="bg-white rounded-2xl p-4 border border-amber-100 flex items-center justify-between shadow-sm hover:border-amber-300 transition-all">
+                {pending.map((m, idx) => (
+                  <div key={m._id || `pending-${idx}`} className="bg-white rounded-2xl p-4 border border-amber-100 flex items-center justify-between shadow-sm hover:border-amber-300 transition-all">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center font-bold text-xs uppercase shrink-0">
                         {getInitials(m.name)}
@@ -260,8 +264,8 @@ export default function Membres() {
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan="3" className="py-24 text-center italic text-slate-300">Aucun membre ne correspond à votre recherche</td></tr>
                 ) : (
-                  filtered.map(m => (
-                    <tr key={m._id} className="group hover:bg-green-50/20 transition-all duration-300">
+                  filtered.map((m, idx) => (
+                    <tr key={m._id || `member-${idx}`} className="group hover:bg-green-50/20 transition-all duration-300">
                       <td className="py-6 px-8">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-green-50 text-green-700 rounded-2xl flex items-center justify-center font-bold text-sm shadow-inner group-hover:bg-green-100 transition-colors">
@@ -402,8 +406,8 @@ export default function Membres() {
                         <h4 className="font-bold text-slate-800 text-lg">Résultats suggérés :</h4>
                       </div>
                       <div className="bg-slate-50 rounded-[32px] border border-slate-100 divide-y divide-slate-100 overflow-hidden shadow-inner max-h-[300px] overflow-y-auto">
-                        {candidates.map(c => (
-                          <div key={c._id} className="p-6 flex items-center justify-between hover:bg-white transition-all group">
+                        {candidates.map((c, idx) => (
+                          <div key={c._id || `candidate-${idx}`} className="p-6 flex items-center justify-between hover:bg-white transition-all group">
                             <div className="flex items-center gap-4">
                               <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center font-bold text-slate-400 group-hover:text-green-600 group-hover:bg-green-50 transition-colors">
                                 {getInitials(c.name)}
